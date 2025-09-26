@@ -27,7 +27,7 @@ See `docs/GettingStarted.md` for detailed steps and `docs/Examples.md` for snipp
 - [Getting Started](docs/GettingStarted.md)
 - [Architecture](docs/Architecture.md)
 - [Flows](docs/Flows.md)
-- [Examples](docs/Examples.md)
+- [Examples](docs/examples.md)
 - [Advanced Redirect URI](docs/AdvancedRedirectURI.md)
 - [Extensibility](docs/Extensibility.md)
 - [Security Considerations](docs/SecurityConsiderations.md)
