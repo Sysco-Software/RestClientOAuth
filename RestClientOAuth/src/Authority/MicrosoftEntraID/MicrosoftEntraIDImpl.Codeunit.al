@@ -1,6 +1,5 @@
 namespace Microsoft.Identity.Client;
 
-using System.Reflection;
 codeunit 50316 "Microsoft Entra ID Impl. KFM"
 {
     Access = Internal;
@@ -8,30 +7,37 @@ codeunit 50316 "Microsoft Entra ID Impl. KFM"
     var
         TenantId: Text;
         AuthorizationEndpointTxt: Label 'https://login.microsoftonline.com/%1/oauth2/v2.0/authorize', Locked = true;
+        DeviceAuthorizationEndpointTxt: Label 'https://login.microsoftonline.com/%1/oauth2/v2.0/devicecode', Locked = true;
         TokenEndpointTxt: Label 'https://login.microsoftonline.com/%1/oauth2/v2.0/token', Locked = true;
         OrganizationsTxt: Label 'organizations', Locked = true;
 
 
-    procedure Initialize(HttpEndpointOAuth20: Record "Http Endpoint OAuth 2.0 KFM")
+    procedure Initialize(OAuthApplicationCode: Code[20]; TargetTenantId: Text)
     var
         EntraAppRegistration: Record "Entra App Registration KFM";
     begin
-        EntraAppRegistration.Get(HttpEndpointOAuth20."OAuth Application Code");
-        if EntraAppRegistration."Supported Account Types" = EntraAppRegistration."Supported Account Types"::MyOrg then
-            TenantId := EntraAppRegistration."Publisher Tenant Id"
+        TenantId := '';
+
+        if OAuthApplicationCode <> '' then begin
+            EntraAppRegistration.Get(OAuthApplicationCode);
+            if EntraAppRegistration."Supported Account Types" = EntraAppRegistration."Supported Account Types"::MyOrg then begin
+                TenantId := EntraAppRegistration."Publisher Tenant Id";
+                exit;
+            end;
+        end;
+
+        if TargetTenantId <> '' then
+            TenantId := TargetTenantId
         else
-            if HttpEndpointOAuth20."Target Entra Tenant Id" <> '' then
-                TenantId := HttpEndpointOAuth20."Target Entra Tenant Id"
-            else
-                TenantId := OrganizationsTxt;
+            TenantId := OrganizationsTxt;
     end;
 
-    procedure GetClientApplication(HttpEndpointOAuth20: Record "Http Endpoint OAuth 2.0 KFM") OAuthClientApplication: Codeunit "OAuth Client Application KFM"
+    procedure GetApplicationConfig(OAuthApplicationCode: Code[20]; ScopesList: List of [Text]) OAuthApplicationConfig: Codeunit "OAuth Application Config KFM"
     var
         EntraAppRegistration: Record "Entra App Registration KFM";
     begin
-        OAuthClientApplication := EntraAppRegistration.GetOAuth2ClientApplication(HttpEndpointOAuth20."OAuth Application Code");
-        OAuthClientApplication.SetScopes(HttpEndpointOAuth20.GetScopes());
+        OAuthApplicationConfig := EntraAppRegistration.GetOAuthApplicationConfig(OAuthApplicationCode);
+        OAuthApplicationConfig.SetScopes(ScopesList);
     end;
 
     procedure SetTenantId(Value: Text)
@@ -39,7 +45,7 @@ codeunit 50316 "Microsoft Entra ID Impl. KFM"
         TenantId := Value;
     end;
 
-    procedure GetAuthorizationEndpoint(OAuthClientApplication: Codeunit "OAuth Client Application KFM") Url: Text;
+    procedure GetAuthorizationEndpoint(OAuthClientApplication: Codeunit "OAuth Application Config KFM") Url: Text;
     var
         QueryString: TextBuilder;
     begin
@@ -60,6 +66,17 @@ codeunit 50316 "Microsoft Entra ID Impl. KFM"
 
     procedure GetTokenEndpoint() Url: Text;
     begin
+        if TenantId = '' then
+            TenantId := OrganizationsTxt;
+
         Url := StrSubstNo(TokenEndpointTxt, TenantId);
+    end;
+
+    procedure GetDeviceAuthorizationEndpoint() Url: Text;
+    begin
+        if TenantId = '' then
+            TenantId := OrganizationsTxt;
+
+        Url := StrSubstNo(DeviceAuthorizationEndpointTxt, TenantId);
     end;
 }

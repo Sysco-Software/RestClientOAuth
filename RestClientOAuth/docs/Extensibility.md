@@ -1,29 +1,48 @@
-## Extensibility
+# Extensibility
 
-The design allows (future) plugging of other authorities or redirect behaviors.
+The core app exposes interfaces and enums so companion apps or consuming extensions can plug in authorities, redirect strategies, and flows.
 
-### Interfaces & Enums
-- `OAuth Authority` (interface)
-- `OAuth Authorization Flow` (interface)
-- `Redirect URI` (interface)
-- `OAuth Authorization Flow Type` (enum)
-- `Redirect URI Type` (enum)
-- `Prompt Interaction` (enum) – user interaction hints
+## Core Extension Points
 
-### Adding a New Authority (Conceptual Steps)
-1. Implement `OAuth Authority` returning authorization & token endpoints.
-2. Provide tenant / instance configuration setters.
-3. (Optional) Add pages/tables for storing registration metadata similar to existing Microsoft Entra ID artifacts.
-4. Reference your authority in flows via `SetAuthority` before initiation.
+| Object | Purpose |
+| --- | --- |
+| `Interface "OAuth Authority KFM"` | Supplies application configuration and authorization, device authorization, and token endpoints. |
+| `Enum 50303 "OAuth Authority KFM"` | Maps authority enum values to authority implementations. |
+| `Interface "OAuth Authorization Flow KFM"` | Common flow surface for initialization and authorization-header retrieval. |
+| `Enum 50301 "OAuthAuthorizationFlowType KFM"` | Maps flow enum values to flow implementations. |
+| `Interface "OAuth Client KFM"` | Common public/confidential token-client surface. |
+| `Enum 50305 "OAuth Client Type KFM"` | Selects public or confidential token client implementation. |
+| `Interface "Redirect URI KFM"` | Obtains authorization codes for Authorization Code flow. |
+| `Enum 50304 "Redirect URI Type KFM"` | Selects redirect URI implementation. |
 
-### Adding a New Redirect URI Strategy
-1. Implement `Redirect URI` with custom logic to obtain the authorization code.
-2. Handle state & PKCE parameters; ensure redirect URI is set on the client application before requesting token.
-3. Emit clear errors or cancellation events.
+The endpoint configuration layer is intentionally separate. Apps can compose these objects directly or depend on the optional `Rest Client OAuth Endpoints` app for generic endpoint tables and pages.
 
-### Custom Authorization Flow
-If adding a distinct OAuth grant, implement `OAuth Authorization Flow` and mimic the pattern in `Auth. Code Grant Flow` / `Client Credentials Flow`. (Currently only those two are supported.)
+## Adding A New Authority
 
-### TODO
-- Document authority implementation template
-- Provide sample test harness for new authority
+1. Implement `Interface "OAuth Authority KFM"`.
+2. Return authorization, device authorization, and token endpoints.
+3. Map stored application code and target tenant data to `Codeunit 50306 "OAuth Application Config KFM"` when endpoint integration is needed.
+4. Add a value to `Enum 50303 "OAuth Authority KFM"` or an enum extension with your implementation.
+5. Set that authority on the desired flow before token acquisition.
+
+## Adding A New Redirect URI Strategy
+
+1. Implement `Interface "Redirect URI KFM"`.
+2. Return a default redirect URI when applicable.
+3. Set the actual redirect URI on `Codeunit 50306 "OAuth Application Config KFM"` before returning an authorization code.
+4. Preserve state and PKCE behavior.
+5. Add a value to `Enum 50304 "Redirect URI Type KFM"` or an enum extension.
+
+See the optional advanced redirect app for a complete companion-app implementation.
+
+## Adding A New Flow
+
+1. Implement `Interface "OAuth Authorization Flow KFM"`.
+2. Keep flow orchestration separate from token HTTP exchange.
+3. Delegate token requests to `Codeunit 50329 "OAuth Public Client KFM"` or `Codeunit 50302 "OAuth Confidential Client KFM"` as appropriate.
+4. Store successful `Codeunit 50309 "OAuth AuthenticationResult KFM"` in memory if the flow supports reuse.
+5. Add a value to `Enum 50301 "OAuthAuthorizationFlowType KFM"` or an enum extension.
+
+## Endpoint App Integration
+
+The endpoint app initializes flows through `Interface "OAuth Authorization Flow KFM"`. Any new flow exposed through `Enum 50301 "OAuthAuthorizationFlowType KFM"` can be selected by endpoint records, but endpoint validation may need to be extended when the new flow has special public/confidential or tenant requirements.

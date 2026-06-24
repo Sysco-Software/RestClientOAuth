@@ -68,31 +68,47 @@ page 50501 "BC APIs with Endpoint"
                         BCCompanyId := BCCompany.Id;
                     end;
                 }
-                field(BCCustomerNo; BCCustomerNo)
-                {
-                    Caption = 'Customer';
-                    TableRelation = "BC Customer";
-
-                    trigger OnAssistEdit()
-                    var
-                        BCCustomer: Record "BC Customer";
-                    begin
-                        BCCustomer.DeleteAll();
-                        Commit();
-
-                        BCConnectorWithEndpoint.GetCustomers(BCCompanyId);
-                    end;
-                }
-
+            }
+            part(Customers; BCCustomers)
+            {
             }
         }
     }
+    actions
+    {
+        area(Processing)
+        {
+            action(GetCustomers)
+            {
+                Caption = 'Get Customers';
+                Image = ChangeCustomer;
+
+                trigger OnAction()
+                begin
+                    BCConnectorWithEndpoint.GetCustomers(BCCompanyId);
+                end;
+            }
+        }
+        area(Promoted)
+        {
+            actionref(GetCustomersRef; GetCustomers)
+            {
+            }
+        }
+    }
+
 
     var
         HttpEndpointCode: Code[20];
         BCEnvironmentName: Text;
         BCCompanyName: Text;
         BCCompanyId: Text;
-        BCCustomerNo: Code[20];
         BCConnectorWithEndpoint: Codeunit "BC Connector with Endpoint";
+
+    trigger OnOpenPage()
+    var
+        BCCustomer: Record "BC Customer";
+    begin
+        BCCustomer.DeleteAll();
+    end;
 }

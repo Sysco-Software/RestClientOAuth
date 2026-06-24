@@ -7,6 +7,7 @@ codeunit 50314 AuthCodeGrantFlowImplKFM
         OAuthAuthority: Interface "OAuth Authority KFM";
         AuthorizationCanceledMsg: Label 'The authorization was canceled.';
         PKCECodeVerifier: Text[128];
+        OAuthClientType: Enum "OAuth Client Type KFM";
         PromptInteraction: Enum "Prompt Interaction";
 
     procedure SetPromptInteraction(Value: Enum "Prompt Interaction")
@@ -19,6 +20,16 @@ codeunit 50314 AuthCodeGrantFlowImplKFM
         Value := PromptInteraction;
     end;
 
+    procedure SetOAuthClientType(Value: Enum "OAuth Client Type KFM")
+    begin
+        OAuthClientType := Value;
+    end;
+
+    procedure GetOAuthClientType() Value: Enum "OAuth Client Type KFM"
+    begin
+        Value := OAuthClientType;
+    end;
+
     procedure SetAuthority(Value: Interface "OAuth Authority KFM")
     begin
         OAuthAuthority := Value;
@@ -29,13 +40,14 @@ codeunit 50314 AuthCodeGrantFlowImplKFM
         Value := OAuthAuthority;
     end;
 
-    procedure Initialize(HttpEndpointOAuth20: Record "Http Endpoint OAuth 2.0 KFM");
+    procedure Initialize(OAuthAuthorityValue: Interface "OAuth Authority KFM"; OAuthClientTypeValue: Enum "OAuth Client Type KFM"; PromptInteractionValue: Enum "Prompt Interaction");
     begin
-        OAuthAuthority := HttpEndpointOAuth20.GetAuthority();
-        PromptInteraction := HttpEndpointOAuth20."Prompt Interaction";
+        OAuthAuthority := OAuthAuthorityValue;
+        OAuthClientType := OAuthClientTypeValue;
+        PromptInteraction := PromptInteractionValue;
     end;
 
-    procedure GetAuthorizationHeader(OAuthClientApplication: Codeunit "OAuth Client Application KFM"): SecretText
+    procedure GetAuthorizationHeader(OAuthClientApplication: Codeunit "OAuth Application Config KFM"): SecretText
     begin
         if OAuthAuthenticationResult.IsValid() then
             exit(OAuthAuthenticationResult.GetAuthorizationHeader());
@@ -47,12 +59,10 @@ codeunit 50314 AuthCodeGrantFlowImplKFM
         exit(OAuthAuthenticationResult.GetAuthorizationHeader());
     end;
 
-    local procedure AcquireTokenByAuthorizationCode(OAuthClientApplication: Codeunit "OAuth Client Application KFM")
+    local procedure AcquireTokenByAuthorizationCode(OAuthClientApplication: Codeunit "OAuth Application Config KFM")
     var
-        OAuthConfidentialClient: Codeunit "OAuth Confidential Client KFM";
+        OAuthClient: Interface "OAuth Client KFM";
         AuthorizationCode: Text;
-        AuthCodeErr: Text;
-        ErrorText: Text;
         RedirectURIType: Enum "Redirect URI Type KFM";
         RedirectURI: Interface "Redirect URI KFM";
     begin
@@ -65,35 +75,36 @@ codeunit 50314 AuthCodeGrantFlowImplKFM
 
         RedirectURI := RedirectURIType;
         AuthorizationCode := RedirectURI.GetAuthorizationCode(OAuthClientApplication, OAuthAuthority, PromptInteraction, GetPKCECodeChallenge());
-        OAuthAuthenticationResult := OAuthConfidentialClient.AcquireTokenByAuthorizationCode(AuthorizationCode, PKCECodeVerifier, OAuthAuthority, OAuthClientApplication);
+        OAuthClient := OAuthClientType;
+        OAuthAuthenticationResult := OAuthClient.AcquireTokenByAuthorizationCode(AuthorizationCode, PKCECodeVerifier, OAuthAuthority, OAuthClientApplication);
     end;
 
     [TryFunction]
-    local procedure TryAcquireTokenByRefreshToken(OAuthClientApplication: Codeunit "OAuth Client Application KFM")
+    local procedure TryAcquireTokenByRefreshToken(OAuthClientApplication: Codeunit "OAuth Application Config KFM")
     var
-        OAuthConfidentialClient: Codeunit "OAuth Confidential Client KFM";
+        OAuthClient: Interface "OAuth Client KFM";
     begin
         if OAuthAuthenticationResult.RefreshToken().IsEmpty() then
             Error('');
 
-        OAuthAuthenticationResult := OAuthConfidentialClient.AcquireTokenByRefreshToken(OAuthAuthenticationResult.RefreshToken(), OAuthAuthority, OAuthClientApplication);
+        OAuthClient := OAuthClientType;
+        OAuthAuthenticationResult := OAuthClient.AcquireTokenByRefreshToken(OAuthAuthenticationResult.RefreshToken(), OAuthAuthority, OAuthClientApplication);
     end;
 
     procedure GetPKCECodeChallenge() ReturnValue: Text
     var
-        CryptographyMgt: codeunit "Cryptography Management";
+        CryptographyMgt: Codeunit "Cryptography Management";
         HashAlgorithmType: Option MD5,SHA1,SHA256,SHA384,SHA512;
-        AllowedChars: Text[66];
-        AllowedCharsTxt: Label 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~', Locked = true;
-        i: Integer;
     begin
-        AllowedChars := AllowedCharsTxt;
-        Randomize();
-
-        PKCECodeVerifier := '';
-        for i := 1 to MaxStrLen(PKCECodeVerifier) do
-            PKCECodeVerifier += AllowedChars[Random(StrLen(AllowedChars))];
-
+        // Verifier = BASE64URL(SHA256(two random GUIDs)).
+        // Produces a 43-char string using the full Base64Url alphabet (A-Z / a-z / 0-9 / - / _),
+        // all of which are RFC 7636 unreserved characters, with ~244 bits of input entropy.
+        PKCECodeVerifier := CopyStr(
+            CryptographyMgt.GenerateHashAsBase64String(
+                Format(CreateGuid(), 0, 3) + Format(CreateGuid(), 0, 3),
+                HashAlgorithmType::SHA256)
+            .Replace('+', '-').Replace('/', '_').Replace('=', ''),
+            1, MaxStrLen(PKCECodeVerifier));
         ReturnValue := CryptographyMgt.GenerateHashAsBase64String(PKCECodeVerifier, HashAlgorithmType::SHA256).Replace('+', '-').Replace('/', '_').Replace('=', '');
     end;
 }

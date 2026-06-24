@@ -12,7 +12,7 @@ codeunit 50325 "Redirect URI Built-in KFM" implements "Redirect URI KFM"
         OAuth2.GetDefaultRedirectURL(ReturnValue);
     end;
 
-    procedure GetAuthorizationCode(OAuthClientApplication: Codeunit "OAuth Client Application KFM"; OAuthAuthority: Interface "OAuth Authority KFM"; PromptInteraction: Enum "Prompt Interaction"; PKCECodeChallenge: Text) AuthorizationCode: Text
+    procedure GetAuthorizationCode(OAuthClientApplication: Codeunit "OAuth Application Config KFM"; OAuthAuthority: Interface "OAuth Authority KFM"; PromptInteraction: Enum "Prompt Interaction"; PKCECodeChallenge: Text) AuthorizationCode: Text
     var
         AuthCodeGrantFlowBuiltin: Page AuthCodeGrantFlowBuiltinKFM;
         Url: Text;
@@ -31,7 +31,7 @@ codeunit 50325 "Redirect URI Built-in KFM" implements "Redirect URI KFM"
             Error(AuthCodeGrantFlowBuiltin.GetAuthError());
     end;
 
-    local procedure GetAuthorizationUrl(OAuthClientApplication: Codeunit "OAuth Client Application KFM"; OAuthAuthority: Interface "OAuth Authority KFM"; PromptInteraction: Enum "Prompt Interaction"; PKCECodeChallenge: Text; State: Text) Url: Text
+    local procedure GetAuthorizationUrl(OAuthClientApplication: Codeunit "OAuth Application Config KFM"; OAuthAuthority: Interface "OAuth Authority KFM"; PromptInteraction: Enum "Prompt Interaction"; PKCECodeChallenge: Text; State: Text) Url: Text
     var
         UrlBuilder: TextBuilder;
     begin

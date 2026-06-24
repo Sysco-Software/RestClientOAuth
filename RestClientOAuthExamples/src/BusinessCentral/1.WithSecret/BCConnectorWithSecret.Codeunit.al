@@ -74,7 +74,7 @@ codeunit 50500 "BC Connector With Secret"
 
     local procedure InitializeRestClient()
     var
-        OAuthClientApplication: Codeunit "OAuth Client Application KFM";
+        OAuthClientApplication: Codeunit "OAuth Application Config KFM";
         OAuthAuthority: Interface "OAuth Authority KFM";
         OAuthAuthorizationFlow: Interface "OAuth Authorization Flow KFM";
         HttpAuthentication: Interface "Http Authentication";
@@ -83,7 +83,7 @@ codeunit 50500 "BC Connector With Secret"
         if RestClientInitialized then
             exit;
 
-        // Step 1: Initialize OAuth client application
+        // Step 1: Initialize OAuth application config
         OAuthClientApplication := CreateOAuthClientApplication();
 
         // Step 2: Initialize OAuth authority
@@ -101,10 +101,11 @@ codeunit 50500 "BC Connector With Secret"
         RestClientInitialized := true;
     end;
 
-    local procedure CreateOAuthClientApplication() OAuthClientApplication: Codeunit "OAuth Client Application KFM"
+    [NonDebuggable]
+    local procedure CreateOAuthClientApplication() OAuthClientApplication: Codeunit "OAuth Application Config KFM"
     begin
-        OAuthClientApplication.SetClientId('<clientid>');
-        OAuthClientApplication.SetClientSecret(SecretStrSubstNo('<secret>'));
+        OAuthClientApplication.SetClientId('<YOUR_CLIENT_ID>'); // Replace with your actual client ID
+        OAuthClientApplication.SetClientSecret(SecretStrSubstNo('<YOUR_CLIENT_SECRET>')); // Replace with your actual client secret
         OAuthClientApplication.AddScope('https://api.businesscentral.dynamics.com/user_impersonation');
     end;
 
@@ -112,7 +113,8 @@ codeunit 50500 "BC Connector With Secret"
     var
         MicrosoftEntraID: Codeunit "Microsoft Entra ID KFM";
     begin
-        MicrosoftEntraID.SetTenantID('<tenantid>');
+        // Optional: set a tenant ID (or domain) to bypass the account picker / organizations endpoint behavior.
+        // MicrosoftEntraID.SetTenantID('<YOUR_TENANT_ID>'); // Replace with your actual tenant ID
         OAuthAuthority := MicrosoftEntraID;
     end;
 
@@ -121,11 +123,12 @@ codeunit 50500 "BC Connector With Secret"
         AuthCodeGrantFlow: Codeunit "Auth. Code Grant Flow KFM";
     begin
         AuthCodeGrantFlow.SetAuthority(OAuthAuthority);
-        AuthCodeGrantFlow.SetPromptInteraction(Enum::"Prompt Interaction"::None);
+        AuthCodeGrantFlow.SetPromptInteraction(Enum::"Prompt Interaction"::"Select Account");
+        AuthCodeGrantFlow.SetOAuthClientType(Enum::"OAuth Client Type KFM"::Confidential);
         OAuthAuthorizationFlow := AuthCodeGrantFlow;
     end;
 
-    local procedure CreateHttpAuthentication(OAuthClientApplication: Codeunit "OAuth Client Application KFM"; OAuthAuthorizationFlow: Interface "OAuth Authorization Flow KFM") HttpAuthentication: Interface "Http Authentication"
+    local procedure CreateHttpAuthentication(OAuthClientApplication: Codeunit "OAuth Application Config KFM"; OAuthAuthorizationFlow: Interface "OAuth Authorization Flow KFM") HttpAuthentication: Interface "Http Authentication"
     var
         HttpAuthenticationOAuth2: Codeunit "Http Authentication OAuth2 KFM";
     begin

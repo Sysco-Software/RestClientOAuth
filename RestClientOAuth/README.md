@@ -1,38 +1,57 @@
-# RestClientOAuth Module
+# Rest Client OAuth
 
-High-level OAuth 2.0 helper module for Microsoft Dynamics 365 Business Central (v26+) focused on Microsoft Entra ID integration. It provides structured abstractions for the Authorization Code Grant and Client Credentials flows using either a client secret or an X.509 certificate (JWT client assertion). Tokens (access & refresh) are stored only in memory (SecretText) for the lifetime of the Rest Client instance.
+Core OAuth 2.0 app for Microsoft Dynamics 365 Business Central outbound REST calls. This app contains the reusable OAuth building blocks: application configuration, Microsoft Entra ID authority support, public and confidential token clients, authorization flows, redirect URI contracts, token result handling, and Microsoft Entra app-registration storage.
 
-## Features
-- Authorization Code Grant Flow (PKCE + state) with secret or certificate
-- Client Credentials Flow with secret or certificate
-- Automatic offline_access scope injection to enable refresh tokens
-- In-memory ephemeral token & refresh handling (no persistence)
-- Pluggable authority design (optimized for Microsoft Entra ID)
-- Built-in vs. custom redirect URI (advanced SSO-friendly control add-in)
+This app intentionally does not contain generic HTTP endpoint tables or pages. Those live in the optional [Rest Client OAuth Endpoints](../RestClientOAuthEndpoints/README.md) app.
 
-## Supported OAuth Flows
-- Authorization Code Grant (interactive, PKCE, refresh token support)
-- Client Credentials (service-to-service, no refresh token, auto re-acquire)
+## When To Use This App
 
-## Quick Start
-1. Create an OAuth Client Application (set client id, secret or certificate, redirect URI type, scopes).
-2. Create a Microsoft Entra ID authority and set the Tenant ID.
-3. Instantiate the desired flow (Authorization Code or Client Credentials) and assign the authority.
-4. Initialize `Http Authentication OAuth2` with the client app + flow.
-5. Initialize `Rest Client` with a handler plus the authentication interface.
+Depend on the core app directly when your extension already owns its setup model for tenants, customers, applications, base URLs, or API connections. You can compose the OAuth objects in AL and inject the resulting `Interface "Http Authentication"` into `Codeunit "Rest Client"`.
 
-See `docs/GettingStarted.md` for detailed steps and `docs/Examples.md` for snippets.
+Add the endpoint app only when you want generic endpoint records and setup UI.
+
+## Main Public Objects
+
+- `Codeunit 50306 "OAuth Application Config KFM"`: client id, optional secret/certificate, redirect URI, and scopes.
+- `Codeunit 50315 "Microsoft Entra ID KFM"`: built-in authority implementation.
+- `Codeunit 50305 "Auth. Code Grant Flow KFM"`: Authorization Code with PKCE as public or confidential client.
+- `Codeunit 50304 "Client Credentials Flow KFM"`: confidential client-credentials flow.
+- `Codeunit 50326 "Device Code Flow KFM"`: public-client Device Code flow.
+- `Codeunit 50301 "Http Authentication OAuth2 KFM"`: authentication facade consumed by `Rest Client`.
+- `Codeunit 50310 "OAuth Certificate KFM"`: certificate and private-key wrapper for JWT client assertions.
+- `Enum 50305 "OAuth Client Type KFM"`: selects public or confidential token exchange for Authorization Code flow.
+- `Enum 50304 "Redirect URI Type KFM"`: selects built-in or extension-provided redirect handling.
+
+## Supported Flows
+
+| Flow | Client type | Typical use |
+|------|-------------|-------------|
+| Authorization Code with PKCE | Public or confidential | Interactive user delegation when redirect-based browser sign-in is available. |
+| Client Credentials | Confidential | Service-to-service calls using application permissions. |
+| Device Code | Public | Fallback user delegation when a code must be shown for sign-in on another device. |
+
+Tokens are held in `SecretText` in memory only. There is no persistent token cache.
 
 ## Documentation
-- [Getting Started](docs/GettingStarted.md)
+
+- [Documentation Index](docs/Index.md)
 - [Architecture](docs/Architecture.md)
+- [Redesign Notes](docs/Redesign.md)
+- [Getting Started](docs/GettingStarted.md)
+- [Configuration](docs/Configuration.md)
 - [Flows](docs/Flows.md)
+- [Device Code Flow](docs/DeviceCodeFlow.md)
 - [Examples](docs/examples.md)
 - [Advanced Redirect URI](docs/AdvancedRedirectURI.md)
 - [Extensibility](docs/Extensibility.md)
 - [Security Considerations](docs/SecurityConsiderations.md)
-- [Configuration](docs/Configuration.md)
 - [Troubleshooting](docs/Troubleshooting.md)
 - [FAQ](docs/FAQ.md)
 - [Changelog](docs/CHANGELOG.md)
 - [Future Improvements](docs/FutureImprovements.md)
+
+Related app documentation:
+
+- [Endpoint app documentation](../RestClientOAuthEndpoints/docs/Index.md)
+- [Advanced redirect URI documentation](../RestClientOAuthAdvancedRedirectURI/docs/Index.md)
+- [Examples app documentation](../RestClientOAuthExamples/docs/Index.md)

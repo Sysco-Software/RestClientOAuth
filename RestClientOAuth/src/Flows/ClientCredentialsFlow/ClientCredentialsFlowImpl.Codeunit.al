@@ -11,12 +11,12 @@ codeunit 50313 ClientCredentialsFlowImplKFM
         OAuthAuthority := Value;
     end;
 
-    procedure Initialize(HttpEndpointOAuth20: Record "Http Endpoint OAuth 2.0 KFM");
+    procedure Initialize(Value: Interface "OAuth Authority KFM");
     begin
-        OAuthAuthority := HttpEndpointOAuth20.GetAuthority();
+        SetAuthority(Value);
     end;
 
-    procedure GetAuthorizationHeader(OAuthClientApplication: Codeunit "OAuth Client Application KFM") ReturnValue: SecretText;
+    procedure GetAuthorizationHeader(OAuthClientApplication: Codeunit "OAuth Application Config KFM") ReturnValue: SecretText;
     var
         OAuthConfidentialClient: Codeunit "OAuth Confidential Client KFM";
     begin

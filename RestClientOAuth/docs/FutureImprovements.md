@@ -9,7 +9,10 @@ Potential enhancements (not implemented yet):
 - Enhanced secret management guidance & integration with secure storage providers.
 - Automatic retry/backoff for transient HTTP failures.
 - Structured logging / diagnostics events.
+- Setup wizard for Microsoft Entra app registrations using a dedicated public setup application, Authorization Code + PKCE, and delegated Microsoft Graph permissions. This should create/configure endpoint app registrations directly from Business Central without reusing another product's public client id.
 
-### TODO
-- Design proposal for token persistence interface
-- Add performance considerations section
+## Design Candidates
+
+- Token persistence interface with explicit opt-in storage.
+- Performance considerations for high-volume API callers.
+- Graph-based Microsoft Entra setup automation using a dedicated public setup application.

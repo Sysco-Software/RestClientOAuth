@@ -1,50 +1,71 @@
-## Examples
+# Examples
 
-Short inline snippets adapted from the examples project (`RestClientOAuthExamples`). Replace IDs/secrets with your own.
+These are compact direct-AL snippets for the core app. Runnable pages and connectors live in [Rest Client OAuth Examples](../../RestClientOAuthExamples/docs/Index.md).
 
-### Auth Code Grant with Client Secret
+## Authorization Code As Public Client
+
 ```al
-OAuthClientApplication.SetClientId('<client-id>');
-OAuthClientApplication.SetClientSecret(SecretStrSubstNo('<client-secret>'));
-OAuthClientApplication.AddScope('https://api.businesscentral.dynamics.com/user_impersonation');
-```
+OAuthApplicationConfig.SetClientId('<client-id>');
+OAuthApplicationConfig.SetRedirectUri('<redirect-uri>');
+OAuthApplicationConfig.SetRedirectUriType(Enum::"Redirect URI Type KFM"::"Built-in");
+OAuthApplicationConfig.AddScope('https://api.businesscentral.dynamics.com/user_impersonation');
 
-### Auth Code Grant with Certificate
-```al
-OAuthClientApplication.SetClientId('<client-id>');
-OAuthCertificate.SetPrivateKey(SecretStrSubstNo('<private-key-xml>'));
-OAuthCertificate.SetCertificate('<base64-cert>');
-OAuthClientApplication.SetCertificate(OAuthCertificate);
-OAuthClientApplication.AddScope('https://api.businesscentral.dynamics.com/user_impersonation');
-```
-
-### Initialize Authorization Code Flow
-```al
 AuthCodeGrantFlow.SetAuthority(OAuthAuthority);
-AuthCodeGrantFlow.SetPromptInteraction(Enum::"Prompt Interaction"::None);
-HttpAuthenticationOAuth2.Initialize(OAuthClientApplication, AuthCodeGrantFlow);
-RestClient.Initialize(HttpClientHandlerExamples, HttpAuthenticationOAuth2);
+AuthCodeGrantFlow.SetOAuthClientType(Enum::"OAuth Client Type KFM"::Public);
+AuthCodeGrantFlow.SetPromptInteraction(Enum::"Prompt Interaction"::"Select Account");
 ```
 
-### Client Credentials Flow
+Public-client Authorization Code flow sends no client secret or certificate assertion.
+
+## Authorization Code As Confidential Client With Secret
+
 ```al
+OAuthApplicationConfig.SetClientId('<client-id>');
+OAuthApplicationConfig.SetClientSecret(SecretStrSubstNo('<client-secret>'));
+OAuthApplicationConfig.AddScope('https://api.businesscentral.dynamics.com/user_impersonation');
+
+AuthCodeGrantFlow.SetAuthority(OAuthAuthority);
+AuthCodeGrantFlow.SetOAuthClientType(Enum::"OAuth Client Type KFM"::Confidential);
+```
+
+## Authorization Code As Confidential Client With Certificate
+
+```al
+OAuthApplicationConfig.SetClientId('<client-id>');
+OAuthCertificate.SetPrivateKey(SecretStrSubstNo('<private-key-xml>'));
+OAuthCertificate.SetCertificate('<base64-certificate>');
+OAuthApplicationConfig.SetCertificate(OAuthCertificate);
+OAuthApplicationConfig.AddScope('https://api.businesscentral.dynamics.com/user_impersonation');
+
+AuthCodeGrantFlow.SetAuthority(OAuthAuthority);
+AuthCodeGrantFlow.SetOAuthClientType(Enum::"OAuth Client Type KFM"::Confidential);
+```
+
+## Client Credentials
+
+```al
+OAuthApplicationConfig.SetClientId('<client-id>');
+OAuthApplicationConfig.SetClientSecret(SecretStrSubstNo('<client-secret>'));
+OAuthApplicationConfig.AddScope('https://graph.microsoft.com/.default');
+
 ClientCredentialsFlow.SetAuthority(OAuthAuthority);
-HttpAuthenticationOAuth2.Initialize(OAuthClientApplication, ClientCredentialsFlow);
-RestClient.Initialize(HttpClientHandlerExamples, HttpAuthenticationOAuth2);
+HttpAuthenticationOAuth2.Initialize(OAuthApplicationConfig, ClientCredentialsFlow);
+RestClient.Initialize(HttpClientHandler, HttpAuthenticationOAuth2);
 ```
 
-### Calling Business Central Environments API
+## Device Code
+
 ```al
-Response := RestClient.GetAsJson('https://api.businesscentral.dynamics.com/v2.0/<environment>/api/v2.0/customers?company=<id>').AsObject();
-foreach JsonToken in Response.GetArray('value') do
-    // process environment
+OAuthApplicationConfig.SetClientId('<public-client-id>');
+OAuthApplicationConfig.AddScope('https://api.businesscentral.dynamics.com/user_impersonation');
+
+DeviceCodeFlow.SetAuthority(OAuthAuthority);
+HttpAuthenticationOAuth2.Initialize(OAuthApplicationConfig, DeviceCodeFlow);
+RestClient.Initialize(HttpClientHandler, HttpAuthenticationOAuth2);
 ```
 
-### Switching Base URL
-```al
-RestClient.SetBaseAddress(StrSubstNo('https://api.businesscentral.dynamics.com/v2.0/%1/api/', EnvironmentName));
-```
+Device Code flow is public-client only and ignores any configured secret or certificate.
 
-### Notes
-- Switching the base url causes the Rest Client to reinitialize, resulting in disposing previously retrieved access and refresh tokens.
-- See also: `BC Connector With Secret`, `BC Connector with Certificate` codeunits for full examples.
+## Endpoint Records
+
+Endpoint-record examples moved to the endpoint app documentation: [Endpoint Getting Started](../../RestClientOAuthEndpoints/docs/GettingStarted.md).

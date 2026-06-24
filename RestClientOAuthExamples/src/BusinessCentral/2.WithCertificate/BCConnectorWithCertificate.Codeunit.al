@@ -74,7 +74,7 @@ codeunit 50503 "BC Connector with Certificate"
 
     local procedure InitializeRestClient()
     var
-        OAuthClientApplication: Codeunit "OAuth Client Application KFM";
+        OAuthClientApplication: Codeunit "OAuth Application Config KFM";
         OAuthAuthority: Interface "OAuth Authority KFM";
         OAuthAuthorizationFlow: Interface "OAuth Authorization Flow KFM";
         HttpAuthentication: Interface "Http Authentication";
@@ -83,7 +83,7 @@ codeunit 50503 "BC Connector with Certificate"
         if RestClientInitialized then
             exit;
 
-        // Step 1: Initialize OAuth client application
+        // Step 1: Initialize OAuth application config
         OAuthClientApplication := CreateOAuthClientApplication();
 
         // Step 2: Initialize OAuth authority
@@ -101,24 +101,25 @@ codeunit 50503 "BC Connector with Certificate"
         RestClientInitialized := true;
     end;
 
-    local procedure CreateOAuthClientApplication() OAuthClientApplication: Codeunit "OAuth Client Application KFM"
+    local procedure CreateOAuthClientApplication() OAuthClientApplication: Codeunit "OAuth Application Config KFM"
     begin
-        OAuthClientApplication.SetClientId('<clientid>');
+        OAuthClientApplication.SetClientId('<YOUR_CLIENT_ID>'); // Replace with your actual client ID
         OAuthClientApplication.SetCertificate(CreateCertificate());
         OAuthClientApplication.AddScope('https://api.businesscentral.dynamics.com/user_impersonation');
     end;
 
+    [NonDebuggable]
     local procedure CreateCertificate() OAuthCertificate: Codeunit "OAuth Certificate KFM"
     begin
-        OAuthCertificate.SetPrivateKey(SecretStrSubstNo('<Unencrypted private key in XML format <RSAKeyValue> >'));
-        OAuthCertificate.SetCertificate('<Base64 encoded certificate>');
+        OAuthCertificate.SetPrivateKey(SecretStrSubstNo('<YOUR_RSA_PRIVATE_KEY_XML>')); // Replace with your actual RSA private key XML
+        OAuthCertificate.SetCertificate('<YOUR_BASE64_ENCODED_CERTIFICATE>'); // Replace with your actual base64-encoded certificate
     end;
 
     local procedure CreateOAuthAuthority() OAuthAuthority: Interface "OAuth Authority KFM"
     var
         MicrosoftEntraID: Codeunit "Microsoft Entra ID KFM";
     begin
-        MicrosoftEntraID.SetTenantID('<tenantid>');
+        MicrosoftEntraID.SetTenantID('<YOUR_TENANT_ID>'); // Replace with your actual tenant ID
         OAuthAuthority := MicrosoftEntraID;
     end;
 
@@ -128,10 +129,11 @@ codeunit 50503 "BC Connector with Certificate"
     begin
         AuthCodeGrantFlow.SetAuthority(OAuthAuthority);
         AuthCodeGrantFlow.SetPromptInteraction(Enum::"Prompt Interaction"::None);
+        AuthCodeGrantFlow.SetOAuthClientType(Enum::"OAuth Client Type KFM"::Confidential);
         OAuthAuthorizationFlow := AuthCodeGrantFlow;
     end;
 
-    local procedure CreateHttpAuthentication(OAuthClientApplication: Codeunit "OAuth Client Application KFM"; OAuthAuthorizationFlow: Interface "OAuth Authorization Flow KFM") HttpAuthentication: Interface "Http Authentication"
+    local procedure CreateHttpAuthentication(OAuthClientApplication: Codeunit "OAuth Application Config KFM"; OAuthAuthorizationFlow: Interface "OAuth Authorization Flow KFM") HttpAuthentication: Interface "Http Authentication"
     var
         HttpAuthenticationOAuth2: Codeunit "Http Authentication OAuth2 KFM";
     begin
