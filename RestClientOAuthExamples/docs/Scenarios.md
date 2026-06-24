@@ -42,10 +42,10 @@ This scenario depends on `Rest Client OAuth Endpoints`. It uses `Record "Http En
 
 Objects:
 
-- `Codeunit 50505 "BC Connector With Azure CLI"`
-- `Page 50504 "BC APIs with Azure CLI"`
+- `Codeunit 50505 "BC Connector Device Code Flow"`
+- `Page 50504 "BC APIs with Device Code Flow"`
 
-This scenario demonstrates `Codeunit 50326 "Device Code Flow KFM"` with a public client. It is useful for learning the flow mechanics, but production setup automation should use an application owned by your product rather than another product's public client id.
+This scenario demonstrates `Codeunit 50326 "Device Code Flow KFM"` with a public client.
 
 ## Demo Codeunit
 
