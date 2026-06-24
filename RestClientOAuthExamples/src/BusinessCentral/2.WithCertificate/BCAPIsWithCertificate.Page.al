@@ -55,22 +55,32 @@ page 50502 "BC APIs With Certificate"
                         BCCompanyId := BCCompany.Id;
                     end;
                 }
-                field(BCCustomerNo; BCCustomerNo)
-                {
-                    Caption = 'Customer';
-                    TableRelation = "BC Customer";
+            }
+            part(Customers; BCCustomers)
+            {
+            }
+        }
+    }
 
-                    trigger OnAssistEdit()
-                    var
-                        BCCustomer: Record "BC Customer";
-                    begin
-                        BCCustomer.DeleteAll();
-                        Commit();
+    actions
+    {
+        area(Processing)
+        {
+            action(GetCustomers)
+            {
+                Caption = 'Get Customers';
+                Image = ChangeCustomer;
 
-                        BCConnectorwithCertificate.GetCustomers(BCCompanyId);
-                    end;
-                }
-
+                trigger OnAction()
+                begin
+                    BCConnectorwithCertificate.GetCustomers(BCCompanyId);
+                end;
+            }
+        }
+        area(Promoted)
+        {
+            actionref(GetCustomersRef; GetCustomers)
+            {
             }
         }
     }
@@ -83,4 +93,11 @@ page 50502 "BC APIs With Certificate"
         BCCompanyId: Text;
         BCCustomerNo: Code[20];
         BCConnectorwithCertificate: Codeunit "BC Connector with Certificate";
+
+    trigger OnOpenPage()
+    var
+        BCCustomer: Record "BC Customer";
+    begin
+        BCCustomer.DeleteAll();
+    end;
 }

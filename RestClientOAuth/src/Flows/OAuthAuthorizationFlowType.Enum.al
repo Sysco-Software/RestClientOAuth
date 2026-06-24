@@ -10,4 +10,9 @@ enum 50301 "OAuthAuthorizationFlowType KFM" implements "OAuth Authorization Flow
         Caption = 'Client Credentials';
         Implementation = "OAuth Authorization Flow KFM" = "Client Credentials Flow KFM";
     }
+    value(2; DeviceCode)
+    {
+        Caption = 'Device Code';
+        Implementation = "OAuth Authorization Flow KFM" = "Device Code Flow KFM";
+    }
 }

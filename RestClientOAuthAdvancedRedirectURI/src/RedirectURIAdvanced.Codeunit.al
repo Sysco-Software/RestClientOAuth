@@ -12,7 +12,7 @@ codeunit 50400 "Redirect URI Advanced KFM" implements "Redirect URI KFM"
         ReturnValue := DefaultRedirectURITxt;
     end;
 
-    procedure GetAuthorizationCode(OAuthClientApplication: Codeunit "OAuth Client Application KFM"; OAuthAuthority: Interface "OAuth Authority KFM"; PromptInteraction: Enum "Prompt Interaction"; PKCECodeChallenge: Text) AuthorizationCode: Text
+    procedure GetAuthorizationCode(OAuthClientApplication: Codeunit "OAuth Application Config KFM"; OAuthAuthority: Interface "OAuth Authority KFM"; PromptInteraction: Enum "Prompt Interaction"; PKCECodeChallenge: Text) AuthorizationCode: Text
     var
         AuthCodeGrantFlowAdvanced: Page AuthCodeGrantFlowAdvancedKFM;
         AuthorizationCanceledMsg: Label 'The authorization was canceled.';
@@ -26,7 +26,7 @@ codeunit 50400 "Redirect URI Advanced KFM" implements "Redirect URI KFM"
             Error(AuthCodeGrantFlowAdvanced.GetAuthorizationError());
     end;
 
-    local procedure GetAuthorizationParams(OAuthClientApplication: Codeunit "OAuth Client Application KFM"; OAuthAuthority: Interface "OAuth Authority KFM"; PromptInteraction: Enum "Prompt Interaction"; PKCECodeChallenge: Text) Params: Text
+    local procedure GetAuthorizationParams(OAuthClientApplication: Codeunit "OAuth Application Config KFM"; OAuthAuthority: Interface "OAuth Authority KFM"; PromptInteraction: Enum "Prompt Interaction"; PKCECodeChallenge: Text) Params: Text
     var
         JObj: JsonObject;
     begin

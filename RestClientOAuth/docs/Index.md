@@ -1,37 +1,38 @@
-## Documentation Index
+# Documentation Index
 
-Central index of all documentation resources for the RestClientOAuth module.
+This folder documents the core `Rest Client OAuth` app. Endpoint records, advanced redirect hosting, and runnable samples now have their own app-level documentation.
+
+## Core App Docs
 
 | Doc | Purpose |
 |-----|---------|
-| [Getting Started](GettingStarted.md) | Step-by-step setup for Authorization Code and Client Credentials flows. |
-| [Architecture](Architecture.md) | Component & sequence diagrams; structural overview. |
-| [Flows](Flows.md) | Comparison of supported OAuth flows and token behavior. |
-| [Examples](Examples.md) | Short AL snippets illustrating common usage patterns. |
-| [Advanced Redirect URI](AdvancedRedirectURI.md) | Custom redirect implementation & SSO-like behavior explanation. |
-| [Extensibility](Extensibility.md) | How to add authorities, redirect strategies, or new flows. |
-| [Security Considerations](SecurityConsiderations.md) | PKCE, state, credential choices, ephemeral token storage. |
-| [Configuration](Configuration.md) | Required settings, redirect types, credential switching. |
-| [Troubleshooting](Troubleshooting.md) | Common issues, causes, and resolutions. |
-| [FAQ](FAQ.md) | Frequently asked questions & concise answers. |
-| [Changelog](CHANGELOG.md) | Versioned change history. |
-| [Future Improvements](FutureImprovements.md) | Potential enhancements & roadmap ideas. |
+| [Architecture](Architecture.md) | Core components, public objects, and runtime call path. |
+| [Redesign Notes](Redesign.md) | What changed in the redesign and why the app split exists. |
+| [Getting Started](GettingStarted.md) | Direct AL composition of application config, authority, flow, OAuth authentication, and Rest Client. |
+| [Configuration](Configuration.md) | Core configuration values and flow-specific rules. |
+| [Flows](Flows.md) | Comparison of Authorization Code, Client Credentials, and Device Code flows. |
+| [Device Code Flow](DeviceCodeFlow.md) | Current Device Code behavior, polling, errors, and security notes. |
+| [examples](examples.md) | Short direct-AL snippets. Runnable samples live in the examples app. |
+| [Extensibility](Extensibility.md) | Custom authorities, redirect strategies, token flows, and endpoint integration contracts. |
+| [Security Considerations](SecurityConsiderations.md) | PKCE, state, credentials, token storage, Device Code risks, and setup identity guidance. |
+| [Troubleshooting](Troubleshooting.md) | Core flow and token-acquisition problems. |
+| [FAQ](FAQ.md) | Common design and usage questions. |
+| [Changelog](CHANGELOG.md) | Versioned change notes. |
+| [Future Improvements](FutureImprovements.md) | Roadmap ideas and known follow-up areas. |
 
-### Quick Navigation
-- Need initial setup? Start with [Getting Started](GettingStarted.md).
-- Want diagrams? See [Architecture](Architecture.md).
-- Picking the right flow? Compare in [Flows](Flows.md).
-- Looking for code? Jump to [Examples](Examples.md).
-- Custom UX / SSO? Read [Advanced Redirect URI](AdvancedRedirectURI.md).
+## Related App Docs
 
-### Suggested Reading Order
-1. Getting Started
-2. Flows
-3. Architecture
-4. Examples
-5. Configuration & Security Considerations
-6. Advanced Redirect URI (if needed)
-7. Extensibility / Future Improvements
+| App | Documentation |
+|-----|---------------|
+| Rest Client OAuth Endpoints | [Endpoint documentation](../../RestClientOAuthEndpoints/docs/Index.md) |
+| Advanced Redirect URI | [Advanced redirect documentation](../../RestClientOAuthAdvancedRedirectURI/docs/Index.md) |
+| Rest Client OAuth Examples | [Examples documentation](../../RestClientOAuthExamples/docs/Index.md) |
 
-### Contributing / Updates
-Update the table above when adding new docs. Keep titles concise and ensure relative links remain valid.
+## Suggested Reading Order
+
+1. [Redesign Notes](Redesign.md)
+2. [Architecture](Architecture.md)
+3. [Flows](Flows.md)
+4. [Getting Started](GettingStarted.md)
+5. [Configuration](Configuration.md) and [Security Considerations](SecurityConsiderations.md)
+6. Related app documentation if you use endpoint records, advanced redirect, or examples

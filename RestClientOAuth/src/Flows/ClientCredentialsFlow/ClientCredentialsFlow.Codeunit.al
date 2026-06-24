@@ -8,12 +8,12 @@ codeunit 50304 "Client Credentials Flow KFM" implements "OAuth Authorization Flo
         ClientCredentialsFlowImpl.SetAuthority(Value);
     end;
 
-    procedure Initialize(HttpEndpointOAuth20: Record "Http Endpoint OAuth 2.0 KFM");
+    procedure Initialize(OAuthAuthority: Interface "OAuth Authority KFM"; OAuthClientType: Enum "OAuth Client Type KFM"; PromptInteraction: Enum "Prompt Interaction");
     begin
-        ClientCredentialsFlowImpl.Initialize(HttpEndpointOAuth20);
+        ClientCredentialsFlowImpl.Initialize(OAuthAuthority);
     end;
 
-    procedure GetAuthorizationHeader(OAuthClientApplication: Codeunit "OAuth Client Application KFM") ReturnValue: SecretText;
+    procedure GetAuthorizationHeader(OAuthClientApplication: Codeunit "OAuth Application Config KFM") ReturnValue: SecretText;
     begin
         ReturnValue := ClientCredentialsFlowImpl.GetAuthorizationHeader(OAuthClientApplication);
     end;

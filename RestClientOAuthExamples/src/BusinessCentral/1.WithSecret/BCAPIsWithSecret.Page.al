@@ -36,7 +36,6 @@ page 50500 "BC APIs with Secret"
                 {
                     Caption = 'BC Company';
                     TableRelation = "BC Company";
-
                     trigger OnAssistEdit()
                     var
                         BCCompany: Record "BC Company";
@@ -55,22 +54,32 @@ page 50500 "BC APIs with Secret"
                         BCCompanyId := BCCompany.Id;
                     end;
                 }
-                field(BCCustomerNo; BCCustomerNo)
-                {
-                    Caption = 'Customer';
-                    TableRelation = "BC Customer";
+            }
+            part(Customers; BCCustomers)
+            {
+            }
+        }
+    }
 
-                    trigger OnAssistEdit()
-                    var
-                        BCCustomer: Record "BC Customer";
-                    begin
-                        BCCustomer.DeleteAll();
-                        Commit();
+    actions
+    {
+        area(Processing)
+        {
+            action(GetCustomers)
+            {
+                Caption = 'Get Customers';
+                Image = ChangeCustomer;
 
-                        BusinessCentralConnector1.GetCustomers(BCCompanyId);
-                    end;
-                }
-
+                trigger OnAction()
+                begin
+                    BusinessCentralConnector1.GetCustomers(BCCompanyId);
+                end;
+            }
+        }
+        area(Promoted)
+        {
+            actionref(GetCustomersRef; GetCustomers)
+            {
             }
         }
     }
@@ -81,4 +90,11 @@ page 50500 "BC APIs with Secret"
         BCCompanyId: Text;
         BCCustomerNo: Code[20];
         BusinessCentralConnector1: Codeunit "BC Connector With Secret";
+
+    trigger OnOpenPage()
+    var
+        BCCustomer: Record "BC Customer";
+    begin
+        BCCustomer.DeleteAll();
+    end;
 }

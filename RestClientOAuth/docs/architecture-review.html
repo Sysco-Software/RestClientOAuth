@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rest Client OAuth — Architecture Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+/* === BLUEPRINT AESTHETIC === */
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --surface: #1c2333;
+  --surface2: #21262d;
+  --surface-elevated: #2d333b;
+  --border: rgba(99,168,250,0.12);
+  --border-bright: rgba(99,168,250,0.25);
+  --text: #cdd9e5;
+  --text-dim: #768390;
+  --text-faint: #444c56;
+  --accent: #58a6ff;
+  --accent-dim: rgba(88,166,255,0.1);
+  --grid: rgba(88,166,255,0.04);
+  --critical: #f85149;
+  --critical-dim: rgba(248,81,73,0.12);
+  --high: #ff7b72;
+  --high-dim: rgba(255,123,114,0.1);
+  --medium: #d29922;
+  --medium-dim: rgba(210,153,34,0.1);
+  --low: #3fb950;
+  --low-dim: rgba(63,185,80,0.09);
+  --info: #58a6ff;
+  --info-dim: rgba(88,166,255,0.09);
+  --green: #3fb950;
+  --green-dim: rgba(63,185,80,0.1);
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 14px;
+  padding: 32px 40px 80px;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* === LAYOUT === */
+.wrap {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 0 44px;
+}
+.main { min-width: 0; }
+
+/* === NAV === */
+.toc {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  padding: 16px 0;
+  grid-row: 1 / -1;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+}
+.toc::-webkit-scrollbar { width: 3px; }
+.toc::-webkit-scrollbar-thumb { background: var(--surface-elevated); border-radius: 2px; }
+.toc-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  padding: 0 0 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.toc a {
+  display: block;
+  font-size: 11px;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+.toc a:hover { color: var(--text); background: var(--surface); }
+.toc a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+
+/* === HERO === */
+.hero {
+  padding: 36px 0 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+.hero-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.hero h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+.hero-sub {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.hero-meta {
+  display: flex;
+  gap: 20px;
+  margin-top: 16px;
+}
+.meta-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+}
+.meta-chip span { color: var(--accent); }
+
+/* === SECTION HEADS === */
+.sec-head {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--accent);
+  padding: 28px 0 10px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 20px;
+}
+.sec-head.red { color: var(--critical); border-color: var(--critical-dim); }
+.sec-head.green { color: var(--green); border-color: var(--green-dim); }
+
+/* === CARDS === */
+.card-grid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.card-grid-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.card-grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.card.blue::before { background: var(--accent); }
+.card.green::before { background: var(--green); }
+.card.orange::before { background: var(--medium); }
+.card.red::before { background: var(--critical); }
+
+.card-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.card h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.card p {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+.card code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  background: var(--surface2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent);
+}
+.card ul {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+}
+.card ul li {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  padding: 2px 0;
+  padding-left: 12px;
+  position: relative;
+  line-height: 1.45;
+}
+.card ul li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+/* === DIAGRAM === */
+.diagram-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.diagram-wrap .mermaid { text-align: center; }
+.diagram-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 16px;
+}
+
+/* === FINDINGS TABLE === */
+.findings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 28px;
+  font-size: 12px;
+}
+.findings-table th {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+.findings-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.findings-table tr:last-child td { border-bottom: none; }
+.findings-table tr:hover td { background: var(--surface2); }
+
+.sev-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.sev-critical { background: var(--critical-dim); color: var(--critical); border: 1px solid rgba(248,81,73,0.25); }
+.sev-high { background: var(--high-dim); color: var(--high); border: 1px solid rgba(255,123,114,0.25); }
+.sev-medium { background: var(--medium-dim); color: var(--medium); border: 1px solid rgba(210,153,34,0.25); }
+.sev-low { background: var(--low-dim); color: var(--low); border: 1px solid rgba(63,185,80,0.25); }
+
+.domain-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+.finding-title { font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.finding-desc { color: var(--text-dim); font-size: 11.5px; }
+.file-ref {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+}
+
+/* === STRENGTHS === */
+.strength-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.strength-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: var(--green-dim);
+  border: 1px solid rgba(63,185,80,0.18);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.strength-check {
+  font-size: 13px;
+  color: var(--green);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.strength-text {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+.strength-text strong { color: var(--text); font-weight: 600; }
+
+/* === DETAIL PANELS === */
+.detail-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.detail-panel.critical { border-left: 3px solid var(--critical); }
+.detail-panel.high { border-left: 3px solid var(--high); }
+.detail-panel.medium { border-left: 3px solid var(--medium); }
+.detail-panel.low { border-left: 3px solid var(--low); }
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.detail-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.detail-body { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+.detail-body code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  background: var(--surface2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent);
+}
+.detail-body strong { color: var(--text); }
+.detail-fix {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.detail-fix strong { color: var(--green); }
+
+/* === WHAT'S NEW === */
+.change-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 24px;
+}
+.change-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.change-item:last-child { border-bottom: none; }
+.change-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.tag-added { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,0.2); }
+.tag-changed { background: var(--medium-dim); color: var(--medium); border: 1px solid rgba(210,153,34,0.2); }
+.tag-new { background: var(--info-dim); color: var(--info); border: 1px solid rgba(88,166,255,0.2); }
+.change-text { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
+.change-text strong { color: var(--text); }
+
+/* === UTILITIES === */
+p.lead {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1000px) {
+  .wrap { grid-template-columns: 1fr; padding-top: 0; }
+  body { padding: 20px 20px 60px; }
+  .toc {
+    position: sticky; top: 0; z-index: 200;
+    max-height: none;
+    display: flex; gap: 4px; align-items: center;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 10px 0; margin: 0 -20px;
+    padding-left: 20px; padding-right: 20px;
+    grid-row: auto;
+  }
+  .toc::-webkit-scrollbar { display: none; }
+  .toc-title { display: none; }
+  .toc a {
+    white-space: nowrap; flex-shrink: 0;
+    border-left: none; border-bottom: 2px solid transparent;
+    border-radius: 4px 4px 0 0; padding: 6px 10px; font-size: 10px;
+  }
+  .toc a.active { border-left: none; border-bottom-color: var(--accent); background: var(--surface); }
+  .main { padding-top: 20px; }
+  .sec-head { scroll-margin-top: 52px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<nav class="toc" id="toc">
+  <div class="toc-title">Contents</div>
+  <a href="#s0">Overview</a>
+  <a href="#s1">What's New</a>
+  <a href="#s2">Architecture</a>
+  <a href="#s3">Strengths</a>
+  <a href="#s4">Findings</a>
+  <a href="#s5">Details</a>
+</nav>
+
+<div class="main">
+
+  <div class="hero">
+    <div class="hero-label">Architecture Review</div>
+    <h1>Rest Client OAuth</h1>
+    <div class="hero-sub">Multi-app workspace: core OAuth library · endpoint adapter · advanced redirect · examples</div>
+    <div class="hero-meta">
+      <div class="meta-chip">Version <span>1.0.0.0 (Unreleased)</span></div>
+      <div class="meta-chip">Platform <span>BC 28 / Runtime 17</span></div>
+      <div class="meta-chip">Scope <span>4 apps</span></div>
+      <div class="meta-chip">Findings <span>5</span></div>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="s0" class="sec-head">Overview</div>
+  <p class="lead">
+    The codebase has undergone a rigorous redesign centred on three axes: (1) splitting the public-client token path from the confidential-client path via an <code>OAuth Client KFM</code> interface and <code>OAuthClientType</code> enum dispatch; (2) adding a Device Code flow as a third authorisation grant; (3) decoupling the core OAuth library from the endpoint adapter app, making the endpoint app optional. The overall pattern is interface → facade codeunit → internal impl codeunit throughout.
+  </p>
+
+  <!-- WHAT'S NEW -->
+  <div id="s1" class="sec-head">What's New in the Redesign</div>
+  <ul class="change-list">
+    <li class="change-item">
+      <span class="change-tag tag-added">Added</span>
+      <span class="change-text"><strong>OAuth Public Client (<code>OAuthPublicClientImpl</code>)</strong> — new codeunit 50330 implements <code>AcquireTokenByAuthorizationCode</code> (with PKCE verifier), <code>AcquireTokenByRefreshToken</code>, and the new <code>AcquireDeviceAuthorization</code> / <code>AcquireTokenByDeviceCode</code> calls. Public client requests never attach a secret or certificate assertion.</span>
+    </li>
+    <li class="change-item">
+      <span class="change-tag tag-added">Added</span>
+      <span class="change-text"><strong>Device Code Flow</strong> — codeunits 50326–50327 and a new <code>Device Code Authorization</code> page handle the polling loop, error propagation (<code>authorization_pending</code>, <code>slow_down</code>, <code>expired_token</code>), refresh-token reuse, and cancellation. Always uses the public client.</span>
+    </li>
+    <li class="change-item">
+      <span class="change-tag tag-new">New</span>
+      <span class="change-text"><strong><code>OAuth Client KFM</code> interface + <code>OAuthClientType</code> enum</strong> — Auth Code Grant flow now dispatches to public or confidential client at runtime via <code>OAuthClient := OAuthClientType;</code>. Selection is driven by the endpoint's <em>OAuth Client Type</em> configuration field, not by whether credentials happen to be present.</span>
+    </li>
+    <li class="change-item">
+      <span class="change-tag tag-changed">Changed</span>
+      <span class="change-text"><strong>App split — core vs endpoint adapter</strong> — <code>Rest Client OAuth</code> no longer depends on endpoint records. <code>Rest Client OAuth Endpoints</code> is a separate optional app that bridges generic <code>Http Endpoint KFM</code> records to the core OAuth objects. Domain apps can depend on the core app directly.</span>
+    </li>
+    <li class="change-item">
+      <span class="change-tag tag-changed">Changed</span>
+      <span class="change-text"><strong>Auth Code Grant flow supports public + confidential exchange</strong> — previously confidential only; now both paths live behind the <code>OAuth Client KFM</code> interface. Confidential still sends secret or signed JWT assertion; public sends verifier code only.</span>
+    </li>
+    <li class="change-item">
+      <span class="change-tag tag-added">Added</span>
+      <span class="change-text"><strong><code>RedirectURINone</code></strong> — explicit no-op redirect URI implementation. Flow logic defaults <code>None</code> → <code>Built-in</code> during Auth Code acquisition so this sentinel value cannot cause a silent empty-code exchange.</span>
+    </li>
+  </ul>
+
+  <!-- ARCHITECTURE -->
+  <div id="s2" class="sec-head">Architecture</div>
+
+  <div class="diagram-wrap">
+    <div class="diagram-title">Component Map — Core App (RestClientOAuth)</div>
+    <div class="mermaid">
+flowchart TD
+    subgraph AUTH["Authentication facade"]
+      HA["Http Authentication OAuth2"]
+    end
+    subgraph CONFIG["Application Config"]
+      OAC["OAuth Application Config\n(facade + impl)"]
+    end
+    subgraph FLOWS["Authorization Flows\n(interface → enum → facade → impl)"]
+      direction LR
+      FI["OAuth Authorization Flow\n[interface]"]
+      ACF["Auth Code\nGrant Flow"]
+      CCF["Client Credentials\nFlow"]
+      DCF["Device Code\nFlow"]
+    end
+    subgraph CLIENTS["OAuth Clients\n(interface → enum dispatch)"]
+      direction LR
+      CI["OAuth Client\n[interface]"]
+      PUB["Public Client\n(PKCE, DeviceCode,\npublic refresh)"]
+      CONF["Confidential Client\n(secret / JWT assertion,\nconfidential refresh)"]
+    end
+    subgraph AUTHORITY["Authority"]
+      AI["OAuth Authority\n[interface]"]
+      ME["Microsoft Entra ID\n(facade + impl)"]
+    end
+    subgraph REDIRECT["Redirect URI"]
+      RI["Redirect URI\n[interface + enum]"]
+      BUILTIN["Built-in\n(BC landing page)"]
+      NONE["None\n(no-op)"]
+    end
+    subgraph RESULT["Auth Result"]
+      AR["OAuth AuthenticationResult\n(facade + impl)"]
+    end
+
+    HA --> OAC
+    HA --> FI
+    FI --> ACF & CCF & DCF
+    ACF --> CI
+    CCF --> CONF
+    DCF --> PUB
+    CI --> PUB & CONF
+    ACF --> RI
+    RI --> BUILTIN & NONE
+    PUB & CONF --> AI
+    AI --> ME
+    PUB & CONF --> AR
+
+    style AUTH fill:#1c2333,stroke:#58a6ff,stroke-width:1.5px
+    style CONFIG fill:#1c2333,stroke:#58a6ff,stroke-width:1.5px
+    style FLOWS fill:#1c2333,stroke:#58a6ff,stroke-width:1.5px
+    style CLIENTS fill:#1c2333,stroke:#3fb950,stroke-width:1.5px
+    style AUTHORITY fill:#1c2333,stroke:#d29922,stroke-width:1.5px
+    style REDIRECT fill:#1c2333,stroke:#d29922,stroke-width:1.5px
+    style RESULT fill:#1c2333,stroke:#58a6ff,stroke-width:1.5px
+    </div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="diagram-title">App Split — Dependency Graph</div>
+    <div class="mermaid">
+flowchart LR
+    CORE["Rest Client OAuth\n(core)"]
+    EP["Rest Client OAuth Endpoints\n(optional adapter)"]
+    ADV["Advanced Redirect URI\n(optional SSO redirect)"]
+    EX["Examples\n(illustrative)"]
+    SYS["System Application"]
+    RC["Rest Client\n(Microsoft)"]
+
+    SYS --> CORE
+    RC --> CORE
+    CORE --> EP
+    CORE --> ADV
+    EP --> EX
+    CORE --> EX
+
+    style CORE fill:#1c2333,stroke:#58a6ff,stroke-width:2px
+    style EP fill:#1c2333,stroke:#3fb950,stroke-width:1px
+    style ADV fill:#1c2333,stroke:#3fb950,stroke-width:1px
+    style EX fill:#1c2333,stroke:#444c56,stroke-width:1px
+    style SYS fill:#21262d,stroke:#444c56,stroke-width:1px
+    style RC fill:#21262d,stroke:#444c56,stroke-width:1px
+    </div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="diagram-title">Token Acquisition — Auth Code Grant (public or confidential)</div>
+    <div class="mermaid">
+sequenceDiagram
+    participant HA as Http Auth OAuth2
+    participant ACF as Auth Code Grant Flow
+    participant RU as Redirect URI (Built-in)
+    participant OC as OAuth Client [Public|Confidential]
+    participant ENTRA as Microsoft Entra ID
+
+    HA->>ACF: GetAuthorizationHeader(config)
+    alt cached & valid
+        ACF-->>HA: SecretText bearer
+    else refresh token present
+        ACF->>OC: AcquireTokenByRefreshToken()
+        OC->>ENTRA: POST /token (refresh_token)
+        ENTRA-->>OC: new access_token
+        OC-->>ACF: AuthenticationResult
+        ACF-->>HA: SecretText bearer
+    else full acquisition
+        ACF->>RU: GetAuthorizationCode(config, authority, PKCE)
+        Note over RU: opens BC page,\nvalidates state
+        RU-->>ACF: authorization_code
+        ACF->>OC: AcquireTokenByAuthorizationCode(code, verifier)
+        OC->>ENTRA: POST /token
+        Note over OC: Public: id+code+verifier only\nConfidential: +secret or JWT assertion
+        ENTRA-->>OC: access_token + refresh_token
+        OC-->>ACF: AuthenticationResult
+        ACF-->>HA: SecretText bearer
+    end
+    </div>
+  </div>
+
+  <div class="card-grid card-grid-3" style="margin-bottom:28px">
+    <div class="card blue">
+      <div class="card-label">Facade pattern</div>
+      <h3>Interface → Facade → Impl</h3>
+      <p>Every external codeunit delegates entirely to an <code>Access = Internal</code> impl. Public API is stable; impl can change independently.</p>
+    </div>
+    <div class="card green">
+      <div class="card-label">Enum dispatch</div>
+      <h3>Polymorphism via enum</h3>
+      <p><code>OAuthAuthorizationFlowType</code>, <code>OAuthClientType</code>, <code>RedirectURIType</code>, and <code>OAuthAuthority</code> enums implement their respective interfaces — concrete codeunit selected at value assignment.</p>
+    </div>
+    <div class="card orange">
+      <div class="card-label">Token lifecycle</div>
+      <h3>In-memory only</h3>
+      <p>Tokens live as <code>SecretText</code> on the flow codeunit. <code>IsValid()</code> compares <code>ExpiresAt</code> to <code>CurrentDateTime</code>. No persistent cache; re-auth on object disposal.</p>
+    </div>
+  </div>
+
+  <!-- STRENGTHS -->
+  <div id="s3" class="sec-head green">Architectural Strengths</div>
+  <div class="strength-grid">
+    <div class="strength-item"><div class="strength-check">✓</div><div class="strength-text"><strong>SecretText throughout</strong> — all tokens, secrets, and cert private keys are <code>SecretText</code>; never plain <code>Text</code></div></div>
+    <div class="strength-item"><div class="strength-check">✓</div><div class="strength-text"><strong>PKCE + state enforced</strong> — <code>code_challenge_method=S256</code> and a <code>CreateGuid()</code> state parameter on every Auth Code request</div></div>
+    <div class="strength-item"><div class="strength-check">✓</div><div class="strength-text"><strong>offline_access auto-added</strong> — both Auth Code and Device Code flows inject the scope before building the token request, preventing silent refresh failures</div></div>
+    <div class="strength-item"><div class="strength-check">✓</div><div class="strength-text"><strong>Clean public/confidential split</strong> — <code>OAuthClientType</code> enum dispatch at the flow level; Device Code is always public, Client Credentials is always confidential</div></div>
+    <div class="strength-item"><div class="strength-check">✓</div><div class="strength-text"><strong>Certificate → JWT assertion</strong> — confidential client builds a proper RS256 JWT client assertion from cert; reduces secret distribution risk</div></div>
+    <div class="strength-item"><div class="strength-check">✓</div><div class="strength-text"><strong>App split is clean</strong> — core app has zero dependency on endpoint records; endpoint app is a pure adapter; domain apps can depend on core directly</div></div>
+    <div class="strength-item"><div class="strength-check">✓</div><div class="strength-text"><strong>Extensibility preserved</strong> — <code>OAuth Authority</code>, <code>OAuth Authorization Flow</code>, and <code>Redirect URI</code> enums are all <code>Extensible = true</code></div></div>
+    <div class="strength-item"><div class="strength-check">✓</div><div class="strength-text"><strong>Refresh-first strategy</strong> — all flows prefer silent refresh over re-interaction; Client Credentials correctly skips refresh (never issued)</div></div>
+    <div class="strength-item"><div class="strength-check">✓</div><div class="strength-text"><strong>NoImplicitWith + Cloud target</strong> — app.json enforces modern AL compile features; no legacy implicit with references</div></div>
+  </div>
+
+  <!-- FINDINGS TABLE -->
+  <div id="s4" class="sec-head red">Findings</div>
+  <p class="lead">5 findings across security and correctness domains, ordered by severity.</p>
+
+  <table class="findings-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Severity</th>
+        <th>Domain</th>
+        <th>Finding</th>
+        <th>Location</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>F1</td>
+        <td><span class="sev-badge sev-critical">Critical</span></td>
+        <td><span class="domain-badge">Security</span></td>
+        <td>
+          <div class="finding-title">Hardcoded credentials in example source</div>
+          <div class="finding-desc">Real-looking client ID and client secret committed in plain text. If active, must be revoked immediately.</div>
+        </td>
+        <td class="file-ref">BCConnectorWithSecret<br>~line 107–108</td>
+      </tr>
+      <tr>
+        <td>F2</td>
+        <td><span class="sev-badge sev-high">High</span></td>
+        <td><span class="domain-badge">Security</span></td>
+        <td>
+          <div class="finding-title">PKCE code verifier uses non-CSPRNG (<code>Random()</code>)</div>
+          <div class="finding-desc">RFC 7636 requires a high-entropy cryptographic source. The current <code>Randomize()</code> + <code>Random()</code> loop is predictable — a guessable verifier breaks PKCE's code-interception protection.</div>
+        </td>
+        <td class="file-ref">OAuthAuthCodeGrantFlowImpl<br>GetPKCECodeChallenge()</td>
+      </tr>
+      <tr>
+        <td>F3</td>
+        <td><span class="sev-badge sev-medium">Medium</span></td>
+        <td><span class="domain-badge">Correctness</span></td>
+        <td>
+          <div class="finding-title"><code>GetUrlEncodedScopes()</code> does not URL-encode</div>
+          <div class="finding-desc">Method name implies encoding but returns raw space-delimited text. When embedded in the authorization URL query string, literal spaces are invalid per RFC 3986 and produce a malformed URL.</div>
+        </td>
+        <td class="file-ref">OAuthApplicationConfigImpl<br>GetUrlEncodedScopes()</td>
+      </tr>
+      <tr>
+        <td>F4</td>
+        <td><span class="sev-badge sev-medium">Medium</span></td>
+        <td><span class="domain-badge">Correctness</span></td>
+        <td>
+          <div class="finding-title"><code>SetScopes()</code> is additive, not a replacement</div>
+          <div class="finding-desc">Iterates and <em>appends</em> to the existing list. If called after <code>AddScope()</code>, or called twice (e.g., once from <code>MicrosoftEntraIDImpl.GetApplicationConfig</code>), scopes accumulate and duplicates enter token requests.</div>
+        </td>
+        <td class="file-ref">OAuthApplicationConfigImpl<br>SetScopes()</td>
+      </tr>
+      <tr>
+        <td>F5</td>
+        <td><span class="sev-badge sev-low">Low</span></td>
+        <td><span class="domain-badge">Consistency</span></td>
+        <td>
+          <div class="finding-title">Asymmetric error handling between confidential and public clients</div>
+          <div class="finding-desc">Confidential client calls <code>Error(ErrorInfo.Create(HttpResponseMessage.GetErrorMessage()))</code> directly — the OAuth <code>error</code> / <code>error_description</code> fields from the response body are never parsed. Public client surfaces them in a structured label. Diagnosing confidential-client token failures is harder.</div>
+        </td>
+        <td class="file-ref">OAuthConfidentialClientImpl<br>SendTokenRequest()</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- DETAILED FINDINGS -->
+  <div id="s5" class="sec-head red">Finding Details</div>
+
+  <div class="detail-panel critical">
+    <div class="detail-header">
+      <span class="sev-badge sev-critical">F1 — Critical</span>
+      <span class="detail-title">Hardcoded credentials in example source</span>
+      <span class="domain-badge">Security</span>
+    </div>
+    <div class="detail-body">
+      In <code>BCConnectorWithSecret.Codeunit.al</code>, <code>CreateOAuthClientApplication()</code> sets:
+      <br><br>
+      <code>OAuthClientApplication.SetClientId('&lt;YOUR_CLIENT_ID&gt;');</code><br>
+      <code>OAuthClientApplication.SetClientSecret(SecretStrSubstNo('&lt;YOUR_CLIENT_SECRET&gt;'));</code>
+      <br><br>
+      These look like real Azure AD credentials. <strong>If they are active they must be revoked immediately.</strong> Even if revoked, they set a dangerous precedent: consumers reading the example will copy the pattern and commit their own real credentials. The security documentation itself states <em>"Secrets should be rotated and never committed to source control."</em>
+      <div class="detail-fix">
+        <strong>Fix:</strong> Replace with obviously fake placeholder values (e.g. <code>'&lt;your-client-id&gt;'</code>), or better, load them at runtime from <code>EnvironmentInformation</code> / Isolated Storage / a setup page — and add a comment explaining this explicitly.
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-panel high">
+    <div class="detail-header">
+      <span class="sev-badge sev-high">F2 — High</span>
+      <span class="detail-title">PKCE code verifier uses non-CSPRNG</span>
+      <span class="domain-badge">Security</span>
+    </div>
+    <div class="detail-body">
+      <code>GetPKCECodeChallenge()</code> builds the 128-character verifier using <code>Randomize()</code> + <code>Random(StrLen(AllowedChars))</code> in a loop. AL's <code>Randomize()</code> / <code>Random()</code> is a deterministic PRNG seeded from the clock. A predictable verifier degrades the PKCE guarantee: an attacker who can observe the authorization code and approximate the acquisition time can enumerate likely verifiers and attempt a token exchange.
+      <div class="detail-fix">
+        <strong>Fix:</strong> Generate the verifier using <code>CryptographyManagement.GenerateRandomBytes()</code> (or equivalent) to get 32+ cryptographically random bytes, then Base64Url-encode them. Derive the challenge from that verifier with the existing SHA-256 + Base64Url logic.
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-panel medium">
+    <div class="detail-header">
+      <span class="sev-badge sev-medium">F3 — Medium</span>
+      <span class="detail-title"><code>GetUrlEncodedScopes()</code> does not URL-encode</span>
+      <span class="domain-badge">Correctness</span>
+    </div>
+    <div class="detail-body">
+      The method joins scopes with a space character and trims the result. This output is used in two contexts:
+      <ul style="margin-top:8px; margin-left:12px; list-style: disc; font-size:12px; color:var(--text-dim)">
+        <li><strong>POST body</strong> (<code>application/x-www-form-urlencoded</code> in token requests) — spaces should be encoded as <code>+</code> or <code>%20</code> per RFC 1866.</li>
+        <li><strong>URL query string</strong> (<code>MicrosoftEntraIDImpl.GetAuthorizationEndpoint()</code>) — spaces in a URI query component must be percent-encoded per RFC 3986. A raw space makes the URL technically malformed.</li>
+      </ul>
+      In practice Microsoft Entra accepts unencoded spaces in many contexts, so this is not a breaking bug today, but the method name is a false contract and a future authority implementation could fail on it.
+      <div class="detail-fix">
+        <strong>Fix:</strong> Either rename to <code>GetScopesAsText()</code> / <code>GetSpaceDelimitedScopes()</code> and have callers encode as needed, or apply <code>.Replace(' ', '%20')</code> inside the method and honour the existing name.
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-panel medium">
+    <div class="detail-header">
+      <span class="sev-badge sev-medium">F4 — Medium</span>
+      <span class="detail-title"><code>SetScopes()</code> is additive, not a replacement</span>
+      <span class="domain-badge">Correctness</span>
+    </div>
+    <div class="detail-body">
+      The implementation iterates <code>ScopesList</code> and calls <code>Scopes.Add()</code> for each entry. It does <strong>not</strong> clear the existing list first. Given that <code>MicrosoftEntraIDImpl.GetApplicationConfig()</code> calls <code>SetScopes(ScopesList)</code> after the config has already been populated from the app registration record, and <code>offline_access</code> is auto-added later by the flow, calling <code>SetScopes</code> on a non-empty config silently duplicates every scope. Duplicate scopes in a token request are tolerated by Entra but can cause unexpected scope claim expansion.
+      <div class="detail-fix">
+        <strong>Fix:</strong> Clear the internal list at the top of <code>SetScopes</code>: <code>Clear(Scopes);</code> before the iteration. This makes the method behave as its name implies.
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-panel low">
+    <div class="detail-header">
+      <span class="sev-badge sev-low">F5 — Low</span>
+      <span class="detail-title">Asymmetric error handling: confidential vs public client</span>
+      <span class="domain-badge">Consistency</span>
+    </div>
+    <div class="detail-body">
+      <code>OAuthPublicClientImpl</code> parses <code>error</code> and <code>error_description</code> from the JSON response body and surfaces them in a structured error label (<code>TokenRequestErr</code>). <code>OAuthConfidentialClientImpl</code> calls <code>Error(ErrorInfo.Create(HttpResponseMessage.GetErrorMessage(), true))</code> directly — the OAuth error body is never read. When a confidential client token request fails (e.g., expired secret, wrong audience, certificate mismatch), the error message shown to the user is the HTTP-level status phrase rather than the specific OAuth error code.
+      <div class="detail-fix">
+        <strong>Fix:</strong> Extract and propagate <code>error</code> / <code>error_description</code> in <code>OAuthConfidentialClientImpl.SendTokenRequest()</code>, mirroring the pattern in <code>OAuthPublicClientImpl</code>.
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /wrap -->
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      background: '#1c2333',
+      primaryColor: '#1c2333',
+      primaryTextColor: '#cdd9e5',
+      primaryBorderColor: '#58a6ff',
+      lineColor: '#58a6ff',
+      secondaryColor: '#21262d',
+      tertiaryColor: '#21262d',
+      edgeLabelBackground: '#161b22',
+      clusterBkg: '#161b22',
+      titleColor: '#cdd9e5',
+      fontFamily: 'IBM Plex Mono, SF Mono, Consolas, monospace',
+      fontSize: '12px',
+    }
+  });
+</script>
+<script>
+(function() {
+  const toc = document.getElementById('toc');
+  const links = toc.querySelectorAll('a');
+  const sections = [];
+  links.forEach(link => {
+    const id = link.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) sections.push({ id, el, link });
+  });
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const match = sections.find(s => s.el === entry.target);
+        if (match) {
+          match.link.classList.add('active');
+          if (window.innerWidth <= 1000)
+            match.link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s.el));
+})();
+</script>
+</body>
+</html>

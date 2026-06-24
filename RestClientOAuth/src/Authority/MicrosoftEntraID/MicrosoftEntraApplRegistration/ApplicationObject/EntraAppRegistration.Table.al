@@ -109,12 +109,12 @@ table 50304 "Entra App Registration KFM"
         NextNumber := NumberSequence.Next(AzAppCodeTxt, false);
     end;
 
-    internal procedure GetAppSecret() EntraAppSecret: Record "Entra Secret KFM"
+    local procedure FindAppSecret(var EntraAppSecret: Record "Entra Secret KFM"): Boolean
     begin
         EntraAppSecret.SetRange("Application Code", Code);
         EntraAppSecret.SetFilter("Start Date/Time", '..%1', CurrentDateTime);
         EntraAppSecret.SetFilter("End Date/Time", '%1|%2..', 0DT, CurrentDateTime + 60000);
-        EntraAppSecret.FindFirst();
+        exit(EntraAppSecret.FindFirst());
     end;
 
     internal procedure GetCertificate() OAuthCertificate: Codeunit "OAuth Certificate KFM"
@@ -126,17 +126,20 @@ table 50304 "Entra App Registration KFM"
         OAuthCertificate.SetPrivateKey(EntraCertificate.GetPrivateKey());
     end;
 
-    procedure GetOAuth2ClientApplication(EntraAppRegistrationCode: Code[10]) OAuth2ClientApplication: Codeunit "OAuth Client Application KFM"
+    procedure GetOAuthApplicationConfig(EntraAppRegistrationCode: Code[20]) OAuthApplicationConfig: Codeunit "OAuth Application Config KFM"
+    var
+        EntraAppSecret: Record "Entra Secret KFM";
     begin
         Rec.Get(EntraAppRegistrationCode);
 
         Rec.TestField("App ID");
-        OAuth2ClientApplication.SetClientId(Rec."App ID");
-        OAuth2ClientApplication.SetRedirectUriType(Rec."Redirect Uri Type");
-        OAuth2ClientApplication.SetRedirectUri(Rec."Redirect Uri");
+        OAuthApplicationConfig.SetClientId(Rec."App ID");
+        OAuthApplicationConfig.SetRedirectUriType(Rec."Redirect Uri Type");
+        OAuthApplicationConfig.SetRedirectUri(Rec."Redirect Uri");
         if Rec."Certificate Code" <> '' then
-            OAuth2ClientApplication.SetCertificate(Rec.GetCertificate())
-        else
-            OAuth2ClientApplication.SetClientSecret(Rec.GetAppSecret().GetSecretText());
+            OAuthApplicationConfig.SetCertificate(Rec.GetCertificate());
+
+        if FindAppSecret(EntraAppSecret) then
+            OAuthApplicationConfig.SetClientSecret(EntraAppSecret.GetSecretText());
     end;
 }

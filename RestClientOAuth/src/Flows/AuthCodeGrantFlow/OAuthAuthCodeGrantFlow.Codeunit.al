@@ -13,6 +13,16 @@ codeunit 50305 "Auth. Code Grant Flow KFM" implements "OAuth Authorization Flow 
         ReturnValue := AuthCodeGrantFlowImpl.GetPromptInteraction();
     end;
 
+    procedure SetOAuthClientType(Value: Enum "OAuth Client Type KFM")
+    begin
+        AuthCodeGrantFlowImpl.SetOAuthClientType(Value);
+    end;
+
+    procedure GetOAuthClientType() ReturnValue: Enum "OAuth Client Type KFM"
+    begin
+        ReturnValue := AuthCodeGrantFlowImpl.GetOAuthClientType();
+    end;
+
     procedure SetAuthority(Value: Interface "OAuth Authority KFM")
     begin
         AuthCodeGrantFlowImpl.SetAuthority(Value);
@@ -23,17 +33,17 @@ codeunit 50305 "Auth. Code Grant Flow KFM" implements "OAuth Authorization Flow 
         Value := AuthCodeGrantFlowImpl.GetAuthority();
     end;
 
-    procedure Initialize(HttpEndpointOAuth20: Record "Http Endpoint OAuth 2.0 KFM");
+    procedure Initialize(OAuthAuthority: Interface "OAuth Authority KFM"; OAuthClientType: Enum "OAuth Client Type KFM"; PromptInteraction: Enum "Prompt Interaction");
     begin
-        AuthCodeGrantFlowImpl.Initialize(HttpEndpointOAuth20);
+        AuthCodeGrantFlowImpl.Initialize(OAuthAuthority, OAuthClientType, PromptInteraction);
     end;
 
-    procedure GetAuthorizationHeader(OAuthClientApplication: Codeunit "OAuth Client Application KFM") ReturnValue: SecretText
+    procedure GetAuthorizationHeader(OAuthClientApplication: Codeunit "OAuth Application Config KFM") ReturnValue: SecretText
     begin
         ReturnValue := AuthCodeGrantFlowImpl.GetAuthorizationHeader(OAuthClientApplication);
     end;
 
-    procedure GetPKCECodeChallenge() ReturnValue : Text
+    procedure GetPKCECodeChallenge() ReturnValue: Text
     begin
         ReturnValue := AuthCodeGrantFlowImpl.GetPKCECodeChallenge();
     end;

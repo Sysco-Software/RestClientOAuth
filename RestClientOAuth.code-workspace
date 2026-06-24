@@ -4,6 +4,9 @@
 			"path": "RestClientOAuth"
 		},
 		{
+			"path": "RestClientOAuthEndpoints"
+		},
+		{
 			"path": "RestClientOAuthAdvancedRedirectURI"
 		},
 		{

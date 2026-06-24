@@ -49,7 +49,7 @@ function acquireAuthCodeSilent(params) {
             var url = getUrl(params, true);
 
             function handler(event) {
-                if (params.redirect_uri.startsWith(event.origin) && (event.data.code = "OAuthResponseReceived")) {
+                if (params.redirect_uri.startsWith(event.origin) && event.data && (event.data.code === "OAuthResponseReceived") && event.data.response) {
                     window.removeEventListener("message", handler);
                     clearTimeout(timer);
                     document.body.removeChild(i);
@@ -82,7 +82,7 @@ function acquireAuthCodePopup(params) {
             var url = getUrl(params, false);
 
             function handler(event) {
-                if (params.redirect_uri.startsWith(event.origin) && (event.data.code == "OAuthResponseReceived")) {
+                if (params.redirect_uri.startsWith(event.origin) && event.data && (event.data.code === "OAuthResponseReceived") && event.data.response) {
                     window.removeEventListener("message", handler);
                     event.source.close();
                     handleResponse(event.data, resolve, reject);
