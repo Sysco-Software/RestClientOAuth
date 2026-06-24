@@ -30,4 +30,4 @@ The endpoint sample expects a configured `Table 50351 "Http Endpoint KFM"` recor
 
 ## Device Code Warning
 
-The Device Code example currently demonstrates use of a known public client id. This can be useful as a local learning shortcut, but it is not the recommended design for product setup or production automation. Product setup should use a dedicated public setup application owned by your product.
+The Device Code example uses placeholder client id values. Replace them with your own Microsoft Entra app registration client id, and ensure public client flows are enabled for that registration. Do not reuse another product's public client id (such as Azure CLI) for setup automation or production use.
