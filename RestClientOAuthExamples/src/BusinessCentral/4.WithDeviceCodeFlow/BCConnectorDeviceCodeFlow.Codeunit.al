@@ -1,4 +1,4 @@
-codeunit 50505 "BC Connector With Azure CLI"
+codeunit 50505 "BC Connector Device Code Flow"
 {
     var
         RestClient: Codeunit "Rest Client";
@@ -103,7 +103,7 @@ codeunit 50505 "BC Connector With Azure CLI"
 
     local procedure CreateOAuthClientApplication() OAuthClientApplication: Codeunit "OAuth Application Config KFM"
     begin
-        OAuthClientApplication.SetClientId('04b07795-8ddb-461a-bbee-02f9e1bf7b46'); // This is the client ID for the Microsoft Azure CLI application
+        OAuthClientApplication.SetClientId('<YOUR_CLIENT_ID>'); // Replace with your actual client ID
         OAuthClientApplication.AddScope('https://api.businesscentral.dynamics.com/user_impersonation');
         OAuthClientApplication.SetRedirectUriType(Enum::"Redirect URI Type KFM"::None);
         OAuthClientApplication.SetRedirectUri('https://localhost');

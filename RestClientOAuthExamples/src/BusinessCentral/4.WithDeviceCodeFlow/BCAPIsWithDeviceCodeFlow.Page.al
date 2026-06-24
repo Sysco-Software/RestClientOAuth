@@ -1,7 +1,7 @@
-page 50504 "BC APIs with Azure CLI"
+page 50504 "BC APIs with Device Code Flow"
 {
     PageType = Card;
-    Caption = 'BC APIs with Azure CLI';
+    Caption = 'BC APIs with Device Code Flow';
     ApplicationArea = All;
     UsageCategory = Tasks;
 
@@ -88,7 +88,7 @@ page 50504 "BC APIs with Azure CLI"
         BCEnvironmentName: Text;
         BCCompanyName: Text;
         BCCompanyId: Text;
-        BusinessCentralConnector1: Codeunit "BC Connector With Azure CLI";
+        BusinessCentralConnector1: Codeunit "BC Connector Device Code Flow";
 
     trigger OnOpenPage()
     var
