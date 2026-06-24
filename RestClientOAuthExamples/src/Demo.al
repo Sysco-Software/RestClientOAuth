@@ -1,13 +1,5 @@
 codeunit 50504 Demo
 {
-
-    trigger OnRun()
-    var
-        OAuth2: Codeunit OAuth2;
-    begin
-        
-    end;
-
     local procedure GetAccessToken()
     var
         OAuth2: Codeunit OAuth2;
@@ -37,7 +29,7 @@ codeunit 50504 Demo
         AccessToken: SecretText;
     begin
         Scopes.Add('https://api.businesscentral.dynamics.com/user_impersonation');
-        if OAuth2.AcquireAuthorizationCodeTokenFromCache(
+        if not OAuth2.AcquireAuthorizationCodeTokenFromCache(
             '<YOUR_CLIENT_ID>',
             SecretStrSubstNo('<YOUR_CLIENT_SECRET>'),
             'https://<YOUR_BC_HOST>/bc/OAuthLanding.htm',

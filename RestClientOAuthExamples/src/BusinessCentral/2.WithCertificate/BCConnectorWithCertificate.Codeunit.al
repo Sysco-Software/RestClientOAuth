@@ -112,7 +112,7 @@ codeunit 50503 "BC Connector with Certificate"
     local procedure CreateCertificate() OAuthCertificate: Codeunit "OAuth Certificate KFM"
     begin
         OAuthCertificate.SetPrivateKey(SecretStrSubstNo('<YOUR_RSA_PRIVATE_KEY_XML>')); // Replace with your actual RSA private key XML
-        OAuthCertificate.SetCertificate('MIICvzCCAaegAwIBAgIJAOdzypAtfpU1MA0GCSqGSIb3DQEBCwUAMBUxEzARBgNVBAMTClRlc3QgT0F1dGgwHhcNMjUwODE3MjAwMDAwWhcNMzAxMjMwMjIwMDAwWjAVMRMwEQYDVQQDEwpUZXN0IE9BdXRoMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxfmY5gmc2I6lA4UiiNtMNz/IRgHeuo7Dl6dV7/9kIyPcaAV+cFkq9XjG7KBy1BuNJiZZ+h8SENUoB4yNymIeZ1/doE+yUeXnafQHJieiaefIXEhjeVm1NauyzXz1k7skWdf6QxKPvvQkBHvRQC54TVgZkjdVlgz3pZj/skL/KLHYeZP9SPsNdLBtgFVW53BfLNLQkTtXZc7uGhYwaTw+az+xclfYZNgeyvgPZBgE4Lc34abxIcQbLOiLnAHlZ3nL/CDjD/eBjr6Gwi9/OpmB0p4iYYSIHSDF4oOJNIf++5+4NaA/3rlaU4KMukHWDDQb99PV6U6H+X3+4XfOWtRBOQIDAQABoxIwEDAOBgNVHQ8BAf8EBAMCB4AwDQYJKoZIhvcNAQELBQADggEBAKSC5ikt1t2ri/zcp63qlQO5zxWsGO8dDEuHbNXm7ueRPyuzglXUXIBaorX5RUKRrlw8xEYHm3Mx0BftM5QNvsRLMvpd+pb7PG0bEsCv1FB74+6ajXp0mAN/JdxTkyL+felc7xrdJ9wVfT5cVye0Uy447UGjzUpiAJBdB6CG2vHgD2ehodhIuura6P2ikIqFYtEtAvzyoMskByjvuYU1LLOxcMqKjJzFlQRe7Xb3CNbCMZHd+AvSlqVCd8ami6fQGpe/pGbYK0SWucLKu+7gfJsVMlkm5cvfgF33Dy1l6na3OX0hp3T7wr9/7Ze4AJ3P9sEYSVmc0kSFkpQwXmg0u1M=');
+        OAuthCertificate.SetCertificate('<YOUR_BASE64_ENCODED_CERTIFICATE>'); // Replace with your actual base64-encoded certificate
     end;
 
     local procedure CreateOAuthAuthority() OAuthAuthority: Interface "OAuth Authority KFM"

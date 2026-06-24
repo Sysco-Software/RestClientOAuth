@@ -1,6 +1,6 @@
 table 50351 "Http Endpoint KFM"
 {
-    Caption = 'HTTP(S)) Endpoint';
+    Caption = 'HTTP(S) Endpoint';
     DataClassification = CustomerContent;
     LookupPageId = "Http Endpoint List KFM";
 

@@ -105,7 +105,7 @@ codeunit 50307 OAuthApplicationConfigImplKFM
         // Historical name: keep scopes space-delimited here; pre-encoding the scope string breaks token acquisition with the current HTTP request flow.
         foreach Scope in Scopes do begin
             TextBuilder.Append(Scope);
-            TextBuilder.Append(' ')
+            TextBuilder.Append(' ');
         end;
         UrlEncodedScopes := TextBuilder.ToText().Trim();
     end;

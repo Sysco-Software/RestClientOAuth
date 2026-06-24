@@ -88,7 +88,6 @@ page 50500 "BC APIs with Secret"
         BCEnvironmentName: Text;
         BCCompanyName: Text;
         BCCompanyId: Text;
-        BCCustomerNo: Code[20];
         BusinessCentralConnector1: Codeunit "BC Connector With Secret";
 
     trigger OnOpenPage()

@@ -88,7 +88,6 @@ page 50504 "BC APIs with Azure CLI"
         BCEnvironmentName: Text;
         BCCompanyName: Text;
         BCCompanyId: Text;
-        BCCustomerNo: Code[20];
         BusinessCentralConnector1: Codeunit "BC Connector With Azure CLI";
 
     trigger OnOpenPage()

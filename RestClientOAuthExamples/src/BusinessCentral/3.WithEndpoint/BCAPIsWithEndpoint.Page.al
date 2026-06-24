@@ -103,7 +103,6 @@ page 50501 "BC APIs with Endpoint"
         BCEnvironmentName: Text;
         BCCompanyName: Text;
         BCCompanyId: Text;
-        BCCustomerNo: Code[20];
         BCConnectorWithEndpoint: Codeunit "BC Connector with Endpoint";
 
     trigger OnOpenPage()

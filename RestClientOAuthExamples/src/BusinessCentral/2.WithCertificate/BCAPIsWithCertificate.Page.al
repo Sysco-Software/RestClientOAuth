@@ -91,7 +91,6 @@ page 50502 "BC APIs With Certificate"
         BCEnvironmentName: Text;
         BCCompanyName: Text;
         BCCompanyId: Text;
-        BCCustomerNo: Code[20];
         BCConnectorwithCertificate: Codeunit "BC Connector with Certificate";
 
     trigger OnOpenPage()
