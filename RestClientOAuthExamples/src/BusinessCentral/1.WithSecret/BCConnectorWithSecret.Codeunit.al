@@ -113,8 +113,8 @@ codeunit 50500 "BC Connector With Secret"
     var
         MicrosoftEntraID: Codeunit "Microsoft Entra ID KFM";
     begin
-        // Next line is optional, only needed if you want to specify a tenant ID for multi-tenant applications
-        MicrosoftEntraID.SetTenantID('<YOUR_TENANT_ID>'); // Replace with your actual tenant ID
+        // Optional: set a tenant ID (or domain) to bypass the account picker / organizations endpoint behavior.
+        // MicrosoftEntraID.SetTenantID('<YOUR_TENANT_ID>'); // Replace with your actual tenant ID
         OAuthAuthority := MicrosoftEntraID;
     end;
 
