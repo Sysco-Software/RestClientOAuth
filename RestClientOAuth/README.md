@@ -42,6 +42,7 @@ Tokens are held in `SecretText` in memory only. There is no persistent token cac
 - [Flows](docs/Flows.md)
 - [Device Code Flow](docs/DeviceCodeFlow.md)
 - [Examples](docs/examples.md)
+- [Advanced Redirect URI](docs/AdvancedRedirectURI.md)
 - [Extensibility](docs/Extensibility.md)
 - [Security Considerations](docs/SecurityConsiderations.md)
 - [Troubleshooting](docs/Troubleshooting.md)
