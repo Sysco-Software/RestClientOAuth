@@ -304,6 +304,7 @@ body {
 .sev-high { background: var(--high-dim); color: var(--high); border: 1px solid rgba(255,123,114,0.25); }
 .sev-medium { background: var(--medium-dim); color: var(--medium); border: 1px solid rgba(210,153,34,0.25); }
 .sev-low { background: var(--low-dim); color: var(--low); border: 1px solid rgba(63,185,80,0.25); }
+.sev-resolved { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,0.25); }
 
 .domain-badge {
   font-family: var(--font-mono);
@@ -364,6 +365,7 @@ body {
 .detail-panel.high { border-left: 3px solid var(--high); }
 .detail-panel.medium { border-left: 3px solid var(--medium); }
 .detail-panel.low { border-left: 3px solid var(--low); }
+.detail-panel.resolved { border-left: 3px solid var(--green); opacity: 0.7; }
 
 .detail-header {
   display: flex;
@@ -393,6 +395,16 @@ body {
   color: var(--text-dim);
 }
 .detail-fix strong { color: var(--green); }
+.detail-resolved {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--green-dim);
+  border-radius: 5px;
+  border: 1px solid rgba(63,185,80,0.25);
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.detail-resolved strong { color: var(--green); }
 
 /* === WHAT'S NEW === */
 .change-list {
@@ -681,7 +693,7 @@ sequenceDiagram
 
   <!-- FINDINGS TABLE -->
   <div id="s4" class="sec-head red">Findings</div>
-  <p class="lead">5 findings across security and correctness domains, ordered by severity.</p>
+  <p class="lead">5 findings across security and correctness domains, ordered by severity. 4 resolved in this PR; 1 open.</p>
 
   <table class="findings-table">
     <thead>
@@ -696,21 +708,21 @@ sequenceDiagram
     <tbody>
       <tr>
         <td>F1</td>
-        <td><span class="sev-badge sev-critical">Critical</span></td>
+        <td><span class="sev-badge sev-resolved">Resolved</span></td>
         <td><span class="domain-badge">Security</span></td>
         <td>
           <div class="finding-title">Hardcoded credentials in example source</div>
-          <div class="finding-desc">Real-looking client ID and client secret committed in plain text. If active, must be revoked immediately.</div>
+          <div class="finding-desc">Replaced with obvious placeholder values (<code>&lt;YOUR_CLIENT_ID&gt;</code> / <code>&lt;YOUR_CLIENT_SECRET&gt;</code>).</div>
         </td>
         <td class="file-ref">BCConnectorWithSecret<br>~line 107–108</td>
       </tr>
       <tr>
         <td>F2</td>
-        <td><span class="sev-badge sev-high">High</span></td>
+        <td><span class="sev-badge sev-resolved">Resolved</span></td>
         <td><span class="domain-badge">Security</span></td>
         <td>
           <div class="finding-title">PKCE code verifier uses non-CSPRNG (<code>Random()</code>)</div>
-          <div class="finding-desc">RFC 7636 requires a high-entropy cryptographic source. The current <code>Randomize()</code> + <code>Random()</code> loop is predictable — a guessable verifier breaks PKCE's code-interception protection.</div>
+          <div class="finding-desc">Verifier is now generated using <code>CreateGuid()</code>-based entropy instead of the predictable <code>Randomize()</code> + <code>Random()</code> loop.</div>
         </td>
         <td class="file-ref">OAuthAuthCodeGrantFlowImpl<br>GetPKCECodeChallenge()</td>
       </tr>
@@ -726,21 +738,21 @@ sequenceDiagram
       </tr>
       <tr>
         <td>F4</td>
-        <td><span class="sev-badge sev-medium">Medium</span></td>
+        <td><span class="sev-badge sev-resolved">Resolved</span></td>
         <td><span class="domain-badge">Correctness</span></td>
         <td>
           <div class="finding-title"><code>SetScopes()</code> is additive, not a replacement</div>
-          <div class="finding-desc">Iterates and <em>appends</em> to the existing list. If called after <code>AddScope()</code>, or called twice (e.g., once from <code>MicrosoftEntraIDImpl.GetApplicationConfig</code>), scopes accumulate and duplicates enter token requests.</div>
+          <div class="finding-desc"><code>SetScopes</code> now calls <code>Clear(Scopes)</code> before iterating, so it replaces the list rather than appending to it.</div>
         </td>
         <td class="file-ref">OAuthApplicationConfigImpl<br>SetScopes()</td>
       </tr>
       <tr>
         <td>F5</td>
-        <td><span class="sev-badge sev-low">Low</span></td>
+        <td><span class="sev-badge sev-resolved">Resolved</span></td>
         <td><span class="domain-badge">Consistency</span></td>
         <td>
           <div class="finding-title">Asymmetric error handling between confidential and public clients</div>
-          <div class="finding-desc">Confidential client calls <code>Error(ErrorInfo.Create(HttpResponseMessage.GetErrorMessage()))</code> directly — the OAuth <code>error</code> / <code>error_description</code> fields from the response body are never parsed. Public client surfaces them in a structured label. Diagnosing confidential-client token failures is harder.</div>
+          <div class="finding-desc"><code>OAuthConfidentialClientImpl.SendTokenRequest()</code> now parses <code>error</code> / <code>error_description</code> from the response body, mirroring the public client pattern.</div>
         </td>
         <td class="file-ref">OAuthConfidentialClientImpl<br>SendTokenRequest()</td>
       </tr>
@@ -750,9 +762,9 @@ sequenceDiagram
   <!-- DETAILED FINDINGS -->
   <div id="s5" class="sec-head red">Finding Details</div>
 
-  <div class="detail-panel critical">
+  <div class="detail-panel resolved">
     <div class="detail-header">
-      <span class="sev-badge sev-critical">F1 — Critical</span>
+      <span class="sev-badge sev-resolved">F1 — Resolved</span>
       <span class="detail-title">Hardcoded credentials in example source</span>
       <span class="domain-badge">Security</span>
     </div>
@@ -763,22 +775,22 @@ sequenceDiagram
       <code>OAuthClientApplication.SetClientSecret(SecretStrSubstNo('&lt;YOUR_CLIENT_SECRET&gt;'));</code>
       <br><br>
       These look like real Azure AD credentials. <strong>If they are active they must be revoked immediately.</strong> Even if revoked, they set a dangerous precedent: consumers reading the example will copy the pattern and commit their own real credentials. The security documentation itself states <em>"Secrets should be rotated and never committed to source control."</em>
-      <div class="detail-fix">
-        <strong>Fix:</strong> Replace with obviously fake placeholder values (e.g. <code>'&lt;your-client-id&gt;'</code>), or better, load them at runtime from <code>EnvironmentInformation</code> / Isolated Storage / a setup page — and add a comment explaining this explicitly.
+      <div class="detail-resolved">
+        <strong>✔ Resolved in this PR:</strong> Replaced with obvious placeholder values (<code>'&lt;YOUR_CLIENT_ID&gt;'</code> / <code>'&lt;YOUR_CLIENT_SECRET&gt;'</code>) with inline comments instructing consumers to substitute their own values at runtime.
       </div>
     </div>
   </div>
 
-  <div class="detail-panel high">
+  <div class="detail-panel resolved">
     <div class="detail-header">
-      <span class="sev-badge sev-high">F2 — High</span>
+      <span class="sev-badge sev-resolved">F2 — Resolved</span>
       <span class="detail-title">PKCE code verifier uses non-CSPRNG</span>
       <span class="domain-badge">Security</span>
     </div>
     <div class="detail-body">
       <code>GetPKCECodeChallenge()</code> builds the 128-character verifier using <code>Randomize()</code> + <code>Random(StrLen(AllowedChars))</code> in a loop. AL's <code>Randomize()</code> / <code>Random()</code> is a deterministic PRNG seeded from the clock. A predictable verifier degrades the PKCE guarantee: an attacker who can observe the authorization code and approximate the acquisition time can enumerate likely verifiers and attempt a token exchange.
-      <div class="detail-fix">
-        <strong>Fix:</strong> Generate the verifier using <code>CryptographyManagement.GenerateRandomBytes()</code> (or equivalent) to get 32+ cryptographically random bytes, then Base64Url-encode them. Derive the challenge from that verifier with the existing SHA-256 + Base64Url logic.
+      <div class="detail-resolved">
+        <strong>✔ Resolved in this PR:</strong> The verifier is now assembled from concatenated <code>CreateGuid()</code> calls (removing formatting characters), providing sufficient entropy. The SHA-256 challenge derivation and Base64Url encoding remain unchanged.
       </div>
     </div>
   </div>
@@ -802,30 +814,30 @@ sequenceDiagram
     </div>
   </div>
 
-  <div class="detail-panel medium">
+  <div class="detail-panel resolved">
     <div class="detail-header">
-      <span class="sev-badge sev-medium">F4 — Medium</span>
+      <span class="sev-badge sev-resolved">F4 — Resolved</span>
       <span class="detail-title"><code>SetScopes()</code> is additive, not a replacement</span>
       <span class="domain-badge">Correctness</span>
     </div>
     <div class="detail-body">
       The implementation iterates <code>ScopesList</code> and calls <code>Scopes.Add()</code> for each entry. It does <strong>not</strong> clear the existing list first. Given that <code>MicrosoftEntraIDImpl.GetApplicationConfig()</code> calls <code>SetScopes(ScopesList)</code> after the config has already been populated from the app registration record, and <code>offline_access</code> is auto-added later by the flow, calling <code>SetScopes</code> on a non-empty config silently duplicates every scope. Duplicate scopes in a token request are tolerated by Entra but can cause unexpected scope claim expansion.
-      <div class="detail-fix">
-        <strong>Fix:</strong> Clear the internal list at the top of <code>SetScopes</code>: <code>Clear(Scopes);</code> before the iteration. This makes the method behave as its name implies.
+      <div class="detail-resolved">
+        <strong>✔ Resolved in this PR:</strong> <code>SetScopes</code> now calls <code>Clear(Scopes);</code> at the top of the procedure before iterating, making it a true replacement rather than an append.
       </div>
     </div>
   </div>
 
-  <div class="detail-panel low">
+  <div class="detail-panel resolved">
     <div class="detail-header">
-      <span class="sev-badge sev-low">F5 — Low</span>
+      <span class="sev-badge sev-resolved">F5 — Resolved</span>
       <span class="detail-title">Asymmetric error handling: confidential vs public client</span>
       <span class="domain-badge">Consistency</span>
     </div>
     <div class="detail-body">
       <code>OAuthPublicClientImpl</code> parses <code>error</code> and <code>error_description</code> from the JSON response body and surfaces them in a structured error label (<code>TokenRequestErr</code>). <code>OAuthConfidentialClientImpl</code> calls <code>Error(ErrorInfo.Create(HttpResponseMessage.GetErrorMessage(), true))</code> directly — the OAuth error body is never read. When a confidential client token request fails (e.g., expired secret, wrong audience, certificate mismatch), the error message shown to the user is the HTTP-level status phrase rather than the specific OAuth error code.
-      <div class="detail-fix">
-        <strong>Fix:</strong> Extract and propagate <code>error</code> / <code>error_description</code> in <code>OAuthConfidentialClientImpl.SendTokenRequest()</code>, mirroring the pattern in <code>OAuthPublicClientImpl</code>.
+      <div class="detail-resolved">
+        <strong>✔ Resolved in this PR:</strong> <code>OAuthConfidentialClientImpl.SendTokenRequest()</code> now extracts and propagates <code>error</code> / <code>error_description</code> from the JSON response body, mirroring the public client pattern.
       </div>
     </div>
   </div>
