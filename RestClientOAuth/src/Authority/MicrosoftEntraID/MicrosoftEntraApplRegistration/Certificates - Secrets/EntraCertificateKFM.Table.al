@@ -7,7 +7,7 @@ table 50303 "Entra Certificate KFM"
 
     fields
     {
-        field(1; Code; Code[10])
+        field(1; "Code"; Code[20])
         {
             Caption = 'Code';
             Editable = false;
@@ -57,7 +57,7 @@ table 50303 "Entra Certificate KFM"
         exit(Rec."Expiry Date" < CurrentDateTime);
     end;
 
-    local procedure GetNextCode() ReturnValue: Code[10]
+    local procedure GetNextCode() ReturnValue: Code[20]
     begin
         ReturnValue := CertCodeTxt;
         ReturnValue := ReturnValue + Format(GetNextNumber()).PadLeft(MaxStrLen(ReturnValue) - StrLen(ReturnValue), '0');
