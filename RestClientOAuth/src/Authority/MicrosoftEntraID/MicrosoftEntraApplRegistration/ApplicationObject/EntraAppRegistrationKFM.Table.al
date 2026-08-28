@@ -52,7 +52,7 @@ table 50304 "Entra App Registration KFM"
             Caption = 'Supported account types';
             DataClassification = CustomerContent;
         }
-        field(6; "Certificate Code"; Code[20])
+        field(6; "Certificate Code"; Code[10])
         {
             Caption = 'Certificate code';
             TableRelation = "Entra Certificate KFM";
