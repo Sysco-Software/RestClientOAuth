@@ -1,4 +1,4 @@
-permissionset 50300 "RestClientOAuth"
+permissionset 50300 "RestClientOAuth KFM"
 {
     Caption = 'Rest Client OAuth Permissions', Locked = true;
     Assignable = true;

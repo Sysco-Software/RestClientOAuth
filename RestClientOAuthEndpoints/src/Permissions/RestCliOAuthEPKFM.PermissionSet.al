@@ -1,4 +1,4 @@
-permissionset 50350 RestClientOAuthEP
+permissionset 50350 "RestCliOAuthEP KFM"
 {
     Caption = 'REST Client OAuth Endpoints', Locked = true;
     Assignable = true;
